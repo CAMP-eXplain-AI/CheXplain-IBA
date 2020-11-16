@@ -1,0 +1,6 @@
+tiny-imagenet-200/
+imagenet/
+
+__pycache__/
+iba.egg-info/
+.ipynb_checkpoints
