@@ -12,7 +12,7 @@ def argparser():
     parser = argparse.ArgumentParser(description='read imagenet path')
     parser.add_argument('-p', '--imagenet_path', type=str, default="/home/yang/下载/ILSVRC2012_img_val",
                         help='path of ImageNet folder')
-    parser.add_argument('-gt', '--ground_truth', type=str, default="/home/yang/下载/ILSVRC2012_validation_ground_truth.txt",
+    parser.add_argument('-gt', '--ground_truth', type=str, default="/home/yang/下载/val.txt",
                         help='path of ImageNet folder')
     return parser
 
@@ -31,7 +31,8 @@ def reorder_imagenet(args):
 
     # load ground_truth
     with open(args.ground_truth) as f:
-        ground_truth = f.read().split('\n')
+        ground_truth = f.readlines()
+        ground_truth = [i.split("\n")[0].split(" ")[1] for i in ground_truth]
 
     # move images into belonging folder
     for file in os.listdir(imagenet_path):
@@ -39,8 +40,7 @@ def reorder_imagenet(args):
             file_name = file.split(".")[0]
             index = int(file_name.split("_")[-1])
             label = ground_truth[index-1]
-            label_minus_1 = str(int(label)-1)
-            class_folder = index_dict[label_minus_1][0]
+            class_folder = index_dict[label][0]
             os.rename(os.path.join(imagenet_path, file), os.path.join(imagenet_path, class_folder, file))
 
 if __name__ == "__main__":
