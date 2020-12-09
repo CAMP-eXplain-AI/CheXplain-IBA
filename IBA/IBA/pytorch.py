@@ -269,7 +269,8 @@ class IBA(nn.Module):
                  estimator=None,
                  progbar=False,
                  input_or_output="output",
-                 relu=False):
+                 relu=False,
+                 reverse_lambda=False):
         super().__init__()
         self.relu = relu
         self.beta = beta
@@ -293,6 +294,7 @@ class IBA(nn.Module):
         self._restrict_flow = False
         self._interrupt_execution = False
         self._hook_handle = None
+        self.reverse_lambda = reverse_lambda
 
         # Check if modifying forward hooks are supported by the current torch version
         if layer is not None:
@@ -363,7 +365,7 @@ class IBA(nn.Module):
         We use it also to estimate the distribution of `x` passing through the layer.
         """
         if self._restrict_flow:
-            return self._do_restrict_information(x)
+            return self._do_restrict_information(x, self.alpha)
         if self._estimate:
             self.estimator(x)
         if self._interrupt_execution:
@@ -409,9 +411,9 @@ class IBA(nn.Module):
         capacity = -0.5 * (1 + log_var_z - mu_z**2 - var_z)
         return capacity
 
-    def _do_restrict_information(self, x):
+    def _do_restrict_information(self, x, alpha):
         """ Selectively remove information from x by applying noise """
-        if self.alpha is None:
+        if alpha is None:
             raise RuntimeWarning("Alpha not initialized. Run _init() before using the bottleneck.")
 
         if self._mean is None:
@@ -424,7 +426,7 @@ class IBA(nn.Module):
             self._active_neurons = self.estimator.active_neurons()
 
         # Smoothen and expand alpha on batch dimension
-        lamb = self.sigmoid(self.alpha)
+        lamb = self.sigmoid(alpha)
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
@@ -433,7 +435,10 @@ class IBA(nn.Module):
         eps = x.data.new(x.size()).normal_()
         ε = self._std * eps + self._mean
         λ = lamb
-        z = λ * x + (1 - λ) * ε
+        if self.reverse_lambda:
+            z = λ * ε + (1 - λ) * x
+        else:
+            z = λ * x + (1 - λ) * ε
         z *= self._active_neurons
 
         # Sample new output values from p(z|x)
@@ -595,7 +600,10 @@ class IBA(nn.Module):
                 model_loss = model_loss_fn(batch)
                 # Taking the mean is equivalent of scaling the sum with 1/K
                 information_loss = self.capacity().mean()
-                loss = model_loss + beta * information_loss
+                if self.reverse_lambda:
+                    loss = -model_loss + beta * information_loss
+                else:
+                    loss = model_loss + beta * information_loss
                 loss.backward()
                 optimizer.step()
 
