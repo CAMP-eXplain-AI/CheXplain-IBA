@@ -8,6 +8,7 @@ from torchvision import transforms as torch_transforms
 from multiprocessing import Pool
 from functools import partial
 
+
 def convert_dicom_to_jpg(image, meta_data, path_to_data, transform=None):
     """ Preprocesses a dicom image and saves it to disk as jpg
 
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     meta_data = pd.read_csv(meta_path, sep=';', dtype={'BrixiaScore': str}, index_col='Filename')
 
     processes = 14
-    size = (320,320)
+    size = (224, 224)
 
     transforms = torch_transforms = torch_transforms.Compose([
         torch_transforms.Resize(size)
@@ -65,7 +66,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=processes)
 
-    wrapper = partial(convert_dicom_to_jpg, meta_data = meta_data, path_to_data=path_to_data, transform=transforms)
+    wrapper = partial(convert_dicom_to_jpg, meta_data=meta_data, path_to_data=path_to_data, transform=transforms)
 
     result = pool.map_async(wrapper, images_list)
     result.get()
