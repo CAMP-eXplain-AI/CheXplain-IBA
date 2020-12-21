@@ -114,7 +114,7 @@ def make_pred_multilabel(dataloader, model, save_as_csv=False):
     return pred_df, auc_df
 
 
-def evaluate_mse(dataloader, model):
+def evaluate_mae(dataloader, model):
     """
     Gives predictions for test fold and calculates AUCs using previously trained model
 
