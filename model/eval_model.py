@@ -116,7 +116,7 @@ def make_pred_multilabel(dataloader, model, save_as_csv=False):
 
 def evaluate_mae(dataloader, model):
     """
-    Gives predictions for test fold and calculates AUCs using previously trained model
+    Calculates MAE using previously trained model
 
     Args:
         data_transforms: torchvision transforms to preprocess raw images; same as validation transforms
