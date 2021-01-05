@@ -21,37 +21,45 @@ class CXRDataset(Dataset):
         self.transform_bb = transform_bb
         self.path_to_images = path_to_images
         if not fine_tune:
-            self.df = pd.read_csv("labels/nih_original_split.csv")
+            self.df = pd.read_csv("model/labels/nih_original_split.csv")
         else:
-            self.df = pd.read_csv("labels/brixia_split.csv")
+            self.df = pd.read_csv("model/labels/brixia_split.csv")
         self.fold = fold
         self.fine_tune = fine_tune
 
         if not fold == 'BBox':
             self.df = self.df[self.df['fold'] == fold]
         else:
-            bbox_images_df = pd.read_csv("labels/BBox_List_2017.csv")
+            bbox_images_df = pd.read_csv("model/labels/BBox_List_2017.csv")
             self.df = pd.merge(left=self.df, right=bbox_images_df, how="inner", on="Image Index")
 
         if not finding == "any":  # can filter for positive findings of the kind described; useful for evaluation
             self.df = self.df[self.df['Finding Label'] == finding]
 
         self.df = self.df.set_index("Image Index")
-        self.PRED_LABEL = [
-            'Atelectasis',
-            'Cardiomegaly',
-            'Effusion',
-            'Infiltration',
-            'Mass',
-            'Nodule',
-            'Pneumonia',
-            'Pneumothorax',
-            'Consolidation',
-            'Edema',
-            'Emphysema',
-            'Fibrosis',
-            'Pleural_Thickening',
-            'Hernia']
+
+        if not self.fine_tune:
+            self.PRED_LABEL = [
+                'Atelectasis',
+                'Cardiomegaly',
+                'Effusion',
+                'Infiltration',
+                'Mass',
+                'Nodule',
+                'Pneumonia',
+                'Pneumothorax',
+                'Consolidation',
+                'Edema',
+                'Emphysema',
+                'Fibrosis',
+                'Pleural_Thickening',
+                'Hernia']
+        else:
+            self.PRED_LABEL = [
+                'NoCovid',
+                'LowCovid',
+                'MildCovid',
+                'SevereCovid']
 
     def __len__(self):
         return len(self.df)
@@ -72,7 +80,8 @@ class CXRDataset(Dataset):
                     label[i] = self.df[self.PRED_LABEL[i].strip()
                                        ].iloc[idx].astype('int')
         else:
-            ground_truth = np.array(self.df['BrixiaScoreGlobal'].iloc[idx].astype('float32'))
+            covid_label = np.zeros(len(self.PRED_LABEL), dtype=int)
+            covid_label[self.df['BrixiaScoreGlobal'].iloc[idx]] = 1
 
         if self.transform:
             image = self.transform(image)
@@ -86,7 +95,7 @@ class CXRDataset(Dataset):
 
             return image, label, self.df.index[idx], transformed_bounding_box
         elif self.fine_tune:
-            return image, ground_truth, self.df.index[idx]
+            return image, covid_label, self.df.index[idx]
         else:
             return image, label, self.df.index[idx]
 

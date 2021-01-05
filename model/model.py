@@ -33,6 +33,22 @@ def fgsm(model, X, y, epsilon=0.1):
     return epsilon * delta.grad.detach().sign()
 
 
+def pgd_linf(model, X, y, epsilon=0.1, alpha=0.01, num_iter=20, randomize=False):
+    """ Construct FGSM adversarial examples on the examples X"""
+    if randomize:
+        delta = torch.rand_like(X, requires_grad=True)
+        delta.data = delta.data * 2 * epsilon - epsilon
+    else:
+        delta = torch.zeros_like(X, requires_grad=True)
+
+    for t in range(num_iter):
+        loss = nn.BCELoss()(model(X + delta), y)
+        loss.backward()
+        delta.data = (delta + alpha * delta.grad.detach().sign()).clamp(-epsilon, epsilon)
+        delta.grad.zero_()
+    return delta.detach()
+
+
 def checkpoint(model, best_loss, epoch, LR, filename):
     """
     Saves checkpoint of torchvision model during training.
@@ -129,13 +145,19 @@ def train_model(
             'Fibrosis',
             'Pleural_Thickening',
             'Hernia']
-        tensorboard_writer_auc = {}
-        tensorboard_writer_AP = {}
-        for label in PRED_LABEL:
-            tensorboard_writer_auc[label] = SummaryWriter('runs/auc/'+label)
-            tensorboard_writer_AP[label] = SummaryWriter('runs/ap/' + label)
     else:
-        tensorboard_writer_mae = SummaryWriter('runs/mae')
+        PRED_LABEL = [
+            'NoCovid',
+            'LowCovid',
+            'MildCovid',
+            'SevereCovid']
+
+    tensorboard_writer_auc = {}
+    tensorboard_writer_AP = {}
+    for label in PRED_LABEL:
+        tensorboard_writer_auc[label] = SummaryWriter('runs/auc/'+label)
+        tensorboard_writer_AP[label] = SummaryWriter('runs/ap/' + label)
+
     # iterate over epochs
     for epoch in range(start_epoch, num_epochs + 1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
@@ -155,16 +177,10 @@ def train_model(
 
             for data in dataloaders[phase]:
 
-                if not fine_tune:
-                    inputs, labels, _ = data
-                else:
-                    inputs, ground_truths, _ = data
+                inputs, labels, _ = data
                 batch_size = inputs.shape[0]
                 inputs = inputs.to(device)
-                if not fine_tune:
-                    labels = (labels.to(device)).float()
-                else:
-                    ground_truths = (ground_truths.to(device)).float()
+                labels = (labels.to(device)).float()
 
                 with torch.set_grad_enabled(phase == 'train'):
 
@@ -185,11 +201,7 @@ def train_model(
                         beta = pos_neg_weights_in_batch(labels)
                         criterion = nn.BCEWithLogitsLoss(pos_weight=beta)
 
-                    if not fine_tune:
-                        loss = criterion(outputs, labels)
-                    else:
-                        ground_truths = ground_truths.unsqueeze(1)
-                        loss = criterion(outputs, ground_truths)
+                    loss = criterion(outputs, labels)
 
                     if phase == 'train':
                         loss.backward()
@@ -205,17 +217,13 @@ def train_model(
             elif phase == 'val':
                 tensorboard_writer_val.add_scalar('Loss', epoch_loss, epoch)
 
-                if not fine_tune:
-                    preds, aucs = E.make_pred_multilabel(dataloaders['val'], model, save_as_csv=False)
-                    aucs.set_index('label', inplace=True)
-                    print(aucs)
-                    for label in PRED_LABEL:
-                        tensorboard_writer_auc[label].add_scalar('AUC', aucs.loc[label, 'auc'], epoch)
-                        tensorboard_writer_AP[label].add_scalar('AP', aucs.loc[label, 'AP'], epoch)
-                else:
-                    mae, _, _ = E.evaluate_mae(dataloaders['val'], model)
-                    print('MAE: ', mae)
-                    tensorboard_writer_mae.add_scalar('MAE', mae, epoch)
+                preds, aucs = E.make_pred_multilabel(dataloaders['val'], model, save_as_csv=False, fine_tune=fine_tune)
+                aucs.set_index('label', inplace=True)
+                print(aucs)
+                for label in PRED_LABEL:
+                    tensorboard_writer_auc[label].add_scalar('AUC', aucs.loc[label, 'auc'], epoch)
+                    tensorboard_writer_AP[label].add_scalar('AP', aucs.loc[label, 'AP'], epoch)
+
             print(phase + ' epoch {}:loss {:.4f} with data size {}'.format(
                 epoch, epoch_loss, dataset_sizes[phase]))
 
@@ -226,7 +234,7 @@ def train_model(
                 if not fine_tune:
                     checkpoint(model, best_loss, epoch, LR, filename='checkpoint_best')
                 else:
-                    checkpoint(model, best_loss, epoch, LR, filename='regression_checkpoint_best')
+                    checkpoint(model, best_loss, epoch, LR, filename='brixia_checkpoint_best')
 
         # log training and validation loss over each epoch
         with open("results/log_train", 'a') as logfile:
@@ -255,12 +263,12 @@ def train_model(
     if not fine_tune:
         checkpoint_best = torch.load('results/checkpoint_best')
     else:
-        checkpoint_best = torch.load('results/regression_checkpoint_best')
+        checkpoint_best = torch.load('results/brixia_checkpoint_best')
     model = checkpoint_best['model']
     return model, best_epoch
 
 
-def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, freeze=False, adam=False,
+def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, freeze=False,
               initial_model_path=None, initial_brixia_model_path=None, weighted_cross_entropy_batchwise=False,
               modification=None, adversarial_training=None, weighted_cross_entropy=False):
     """
@@ -290,6 +298,7 @@ def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, freeze=False, a
     std = [0.229, 0.224, 0.225]
 
     N_LABELS = 14  # we are predicting 14 labels
+    N_COVID_LABELS = 4  # we are predicting 4 COVID labels
 
     # define torchvision transforms
     data_transforms = {
@@ -352,10 +361,7 @@ def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, freeze=False, a
                         param.requires_grad = False
                     if feature == model.module.features.transition2:
                         break
-            model.module.classifier = nn.Sequential(
-                nn.Linear(num_ftrs, 1),
-                nn.ReLU(inplace=True)
-            )
+            model.module.classifier = nn.Linear(num_ftrs, N_COVID_LABELS)
     else:
         model = models.densenet121(pretrained=True)
         num_ftrs = model.classifier.in_features
@@ -394,34 +400,23 @@ def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, freeze=False, a
         model = nn.DataParallel(model)
     model.to(device)
 
-    if fine_tune:
-        criterion = nn.MSELoss()
+    if weighted_cross_entropy:
+        pos_weights = transformed_datasets['train'].pos_neg_balance_weights()
+        print(pos_weights)
+        # pos_weights[pos_weights>40] = 40
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
     else:
-        if weighted_cross_entropy:
-            pos_weights = transformed_datasets['train'].pos_neg_balance_weights()
-            print(pos_weights)
-            # pos_weights[pos_weights>40] = 40
-            criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
-        else:
-            criterion = nn.BCEWithLogitsLoss()
+        criterion = nn.BCEWithLogitsLoss()
 
-    if adam:
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=LR, weight_decay=WEIGHT_DECAY)
-    else:
-        optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=LR, weight_decay=WEIGHT_DECAY, momentum=0.9)
+    optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=LR, weight_decay=WEIGHT_DECAY, momentum=0.9)
 
     dataset_sizes = {x: len(transformed_datasets[x]) for x in ['train', 'val']}
 
-    if not fine_tune:
-        # train model
-        model, best_epoch = train_model(model, criterion, optimizer, LR, num_epochs=NUM_EPOCHS,
-                                        dataloaders=dataloaders, dataset_sizes=dataset_sizes, weight_decay=WEIGHT_DECAY,
-                                        weighted_cross_entropy_batchwise=weighted_cross_entropy_batchwise,
-                                        adversarial_training=adversarial_training)
-        # get preds and AUCs on test fold
-        preds, aucs = E.make_pred_multilabel(data_transforms, model, PATH_TO_IMAGES)
-        return preds, aucs
-    else:
-        model, best_epoch = train_model(model, criterion, optimizer, LR, num_epochs=NUM_EPOCHS,
-                                        dataloaders=dataloaders, dataset_sizes=dataset_sizes,
-                                        weight_decay=WEIGHT_DECAY, fine_tune=fine_tune)
+    # train model
+    model, best_epoch = train_model(model, criterion, optimizer, LR, num_epochs=NUM_EPOCHS,
+                                    dataloaders=dataloaders, dataset_sizes=dataset_sizes, weight_decay=WEIGHT_DECAY,
+                                    weighted_cross_entropy_batchwise=weighted_cross_entropy_batchwise,
+                                    adversarial_training=adversarial_training, fine_tune=fine_tune)
+    # get preds and AUCs on test fold
+    preds, aucs = E.make_pred_multilabel(dataloaders['val'], model, save_as_csv=False, fine_tune=fine_tune)
+    return preds, aucs

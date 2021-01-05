@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-data_brixia = pd.read_csv("labels/metadata_global_v2.csv", sep=";")
+data_brixia = pd.read_csv("model/labels/metadata_global_v2.csv", sep=";")
 
 # droping the extra columns that we do not use (such as Age, ...)
 data_brixia = data_brixia[["Filename", "BrixiaScoreGlobal"]]
@@ -19,5 +19,9 @@ data_test['fold'] = 'test'
 data_brixia = data_train.append(data_val)
 data_brixia = data_brixia.append(data_test).sort_index()
 
-data_brixia.to_csv('labels/brixia_split.csv', index=False)
+data_brixia.loc[data_brixia["BrixiaScoreGlobal"].isin(range(1, 7)), "BrixiaScoreGlobal"] = 1
+data_brixia.loc[data_brixia["BrixiaScoreGlobal"].isin(range(7, 13)), "BrixiaScoreGlobal"] = 2
+data_brixia.loc[data_brixia["BrixiaScoreGlobal"].isin(range(13, 19)), "BrixiaScoreGlobal"] = 3
+
+data_brixia.to_csv('model/labels/brixia_split.csv', index=False)
 
