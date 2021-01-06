@@ -15,17 +15,21 @@ class CXRDataset(Dataset):
             transform=None,
             transform_bb=None,
             finding="any",
-            fine_tune=False):
+            fine_tune=False,
+            regression=False):
 
         self.transform = transform
         self.transform_bb = transform_bb
         self.path_to_images = path_to_images
         if not fine_tune:
             self.df = pd.read_csv("model/labels/nih_original_split.csv")
+        elif fine_tune and not regression:
+            self.df = pd.read_csv("model/labels/brixia_split_classification.csv")
         else:
-            self.df = pd.read_csv("model/labels/brixia_split.csv")
+            self.df = pd.read_csv("model/labels/brixia_split_regression.csv")
         self.fold = fold
         self.fine_tune = fine_tune
+        self.regression = regression
 
         if not fold == 'BBox':
             self.df = self.df[self.df['fold'] == fold]
@@ -79,9 +83,11 @@ class CXRDataset(Dataset):
                 if self.df[self.PRED_LABEL[i].strip()].iloc[idx].astype('int') > 0:
                     label[i] = self.df[self.PRED_LABEL[i].strip()
                                        ].iloc[idx].astype('int')
-        else:
+        elif self.fine_tune and not self.regression:
             covid_label = np.zeros(len(self.PRED_LABEL), dtype=int)
             covid_label[self.df['BrixiaScoreGlobal'].iloc[idx]] = 1
+        else:
+            ground_truth = np.array(self.df['BrixiaScoreGlobal'].iloc[idx].astype('float32'))
 
         if self.transform:
             image = self.transform(image)
@@ -94,8 +100,10 @@ class CXRDataset(Dataset):
                 transformed_bounding_box = self.transform_bb(bounding_box)
 
             return image, label, self.df.index[idx], transformed_bounding_box
-        elif self.fine_tune:
+        elif self.fine_tune and not self.regression:
             return image, covid_label, self.df.index[idx]
+        elif self.fine_tune and self.regression:
+            return image, ground_truth, self.df.index[idx]
         else:
             return image, label, self.df.index[idx]
 
