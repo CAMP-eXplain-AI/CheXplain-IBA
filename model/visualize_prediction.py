@@ -209,7 +209,7 @@ def show_next(cxr, model, label, inputs, filename, bbox):
     bbox_mask[bbox[0, 1]: bbox[0, 1] + bbox[0, 3], bbox[0, 0]: bbox[0, 0] + bbox[0, 2]] = True
 
     bbox_area_ratio = (bbox_mask.sum() / bbox_mask.size) * 100
-    activation_mask = np.logical_or(raw_cam >= 180 , raw_cam <= 60)
+    activation_mask = np.logical_or(raw_cam >= 180, raw_cam <= 60)
     heat_mask = np.logical_and(raw_cam < 180, raw_cam > 60)
 
     # finding components in heatmap
@@ -487,7 +487,7 @@ def eval_localization(dataloader, model, LABEL, map_thresholds, percentiles, ior
     return accuracy
 
 
-def plot_map(model, dataloader, label, covid=False, saliency_layer=None):
+def plot_map(model, dataloader, label=None, covid=False, saliency_layer=None):
     """Plot an example.
 
     Args:
@@ -520,8 +520,6 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None):
             'LowCovid',
             'MildCovid',
             'SevereCovid']
-
-    category_id = FINDINGS.index(label)
 
     try:
         if not covid:
@@ -556,7 +554,12 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None):
 
     if not covid:
         show_next(cxr, model, label, inputs, filename, bbox)
-    
+
+    if covid and label is None:
+        label = preds.loc[preds["Ground Truth"]==True].index[0]
+
+    category_id = FINDINGS.index(label)
+
     methods = ['grad-cam backprop', 'gradient', 'deconvnet', 'excitation backprop', 'guided backprop', 'linear approx']
     for method in methods:
         if method == 'grad-cam backprop':
@@ -595,3 +598,9 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None):
     plt.show()
 
     print(preds)
+
+    if covid:
+        data_brixia = pd.read_csv("model/labels/metadata_global_v2.csv", sep=";")
+        data_brixia.set_index("Filename", inplace=True)
+        score = data_brixia.loc[filename[0].replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
+        print('Brixia 6 regions Score: ', '0' * (6 - len(score)) + score)
