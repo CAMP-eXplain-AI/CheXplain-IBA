@@ -2,13 +2,7 @@ from __future__ import print_function, division
 
 # pytorch imports
 import torch
-from torchray.utils import imsc
 from torchray.attribution.grad_cam import grad_cam
-from torchray.attribution.gradient import gradient as torchray_gradient
-from torchray.attribution.deconvnet import deconvnet
-from torchray.attribution.excitation_backprop import excitation_backprop
-from torchray.attribution.guided_backprop import guided_backprop
-from torchray.attribution.linear_approx import linear_approx
 from torchvision import transforms
 
 # image / graphics imports
@@ -560,40 +554,25 @@ def plot_map(model, dataloader, label=None, covid=False, saliency_layer=None):
 
     category_id = FINDINGS.index(label)
 
-    methods = ['grad-cam backprop', 'gradient', 'deconvnet', 'excitation backprop', 'guided backprop', 'linear approx']
-    for method in methods:
-        if method == 'grad-cam backprop':
-            saliency = grad_cam(model, original, category_id, saliency_layer=saliency_layer)
-        elif method == 'gradient':
-            saliency = torchray_gradient(model, original, category_id)
-        elif method == 'deconvnet':
-            saliency = deconvnet(model, original, category_id)
-        elif method == 'excitation backprop':
-            saliency = excitation_backprop(model, original, category_id, saliency_layer=saliency_layer)
-        elif method == 'guided backprop':
-            saliency = guided_backprop(model, original, category_id)
-        elif method == 'linear approx':
-            saliency = linear_approx(model, original, category_id, saliency_layer=saliency_layer)
+    saliency = grad_cam(model, original, category_id, saliency_layer=saliency_layer)
 
-        fig, (showcxr, heatmap) = plt.subplots(ncols=2, figsize=(14, 5))
+    fig, (showcxr, heatmap) = plt.subplots(ncols=2, figsize=(14, 5))
 
-        showcxr.imshow(cxr)
-        showcxr.axis('off')
-        showcxr.set_title(filename[0])
-        if not covid:
-            rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
-                                              facecolor='none', zorder=2)
-            showcxr.add_patch(rect_original)
+    showcxr.imshow(cxr)
+    showcxr.axis('off')
+    showcxr.set_title(filename[0])
+    if not covid:
+        rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
+                                          facecolor='none', zorder=2)
+        showcxr.add_patch(rect_original)
 
-        hmap = sns.heatmap(saliency.detach().cpu().numpy().squeeze(),
-                           cmap='viridis',
-                           annot=False,
-                           zorder=2,
-                           linewidths=0)
-        hmap.axis('off')
-        hmap.set_title('{} for category {}'.format(method, label), fontsize=8)
-        # if covid:
-        #    hmap.add_patch(rect_original)
+    hmap = sns.heatmap(saliency.detach().cpu().numpy().squeeze(),
+                       cmap='viridis',
+                       annot=False,
+                       zorder=2,
+                       linewidths=0)
+    hmap.axis('off')
+    hmap.set_title('TorchRay grad cam for category {}'.format(label), fontsize=8)
 
     plt.show()
 
