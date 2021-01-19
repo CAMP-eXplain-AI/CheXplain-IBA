@@ -469,8 +469,6 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None, axes_a=
             'MildCovid',
             'SevereCovid']
 
-    category_id = FINDINGS.index(label)
-
     try:
         if not covid:
             inputs, labels, filename, bbox = next(dataloader)
@@ -501,6 +499,12 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None, axes_a=
     std = np.array([0.229, 0.224, 0.225])
     cxr = std * cxr + mean
     cxr = np.clip(cxr, 0, 1)
+
+    # In case we want to visualize COVID, we use the highest probability as label for the visualization
+    if covid and label is None:
+        label = preds.loc[preds["Ground Truth"] == True].index[0]
+
+    category_id = FINDINGS.index(label)
 
     # if not covid:
     #     show_iba(cxr, model, label, inputs, labels, filename, bbox)
@@ -556,7 +560,16 @@ def plot_map(model, dataloader, label, covid=False, saliency_layer=None, axes_a=
         # if covid:
         #    hmap.add_patch(rect_original)
 
+        if covid:
+            data_brixia = pd.read_csv("model/labels/metadata_global_v2.csv", sep=";")
+            data_brixia.set_index("Filename", inplace=True)
+            score = data_brixia.loc[filename[0].replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
+            score = '0' * (6 - len(score)) + score
+            print('Brixia 6 regions Score: ')
+            print(score[0], ' | ', score[3])
+            print(score[1], ' | ', score[4])
+            print(score[2], ' | ', score[5])
 
-    return inputs, labels, filename, bbox, preds 
+    return inputs, labels, filename, bbox, preds
 
 
