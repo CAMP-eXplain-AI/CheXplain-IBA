@@ -93,7 +93,8 @@ def load_data(
             path_to_images=PATH_TO_IMAGES,
             fold=fold,
             transform=data_transform,
-            fine_tune=True)
+            fine_tune=True,
+            label_path=label_path)
     
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=1, shuffle=False, num_workers=1)
@@ -668,5 +669,26 @@ class Plotter:
     def model_loss_closure(input):
       loss = torch.nn.BCEWithLogitsLoss()
       mse_loss = loss(self.model(input), torch.tensor(target).view(1,-1).expand(10, -1).to(self.dev).float())
+      return mse_loss
+    return model_loss_closure
+
+  def mse_loss_with_target(self, target):
+    def model_loss_closure(input):
+      loss = torch.nn.MSELoss()
+      mse_loss = loss(model(input), torch.tensor(target).to(self.dev))
+      return mse_loss
+    return model_loss_closure
+
+  def mse_loss_maximize_score(self, target=None):
+    def model_loss_closure(input):
+      loss = torch.nn.MSELoss()
+      mse_loss = -loss(model(input), torch.tensor(0.).to(self.dev))
+      return mse_loss
+    return model_loss_closure
+  
+  def mse_loss_minimal_deviation(self, target=None):
+    def model_loss_closure(input):
+      loss = torch.nn.MSELoss()
+      mse_loss = loss(model(input), original_model(input))
       return mse_loss
     return model_loss_closure

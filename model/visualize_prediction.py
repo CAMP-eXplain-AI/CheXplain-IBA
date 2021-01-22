@@ -2,7 +2,6 @@ from __future__ import print_function, division
 
 # pytorch imports
 import torch
-from torchray.attribution.grad_cam import grad_cam
 from torchvision import transforms
 
 # image / graphics imports
@@ -10,7 +9,6 @@ from PIL import Image
 from pylab import *
 import seaborn as sns
 import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 
 # data science
 import numpy as np
@@ -84,10 +82,10 @@ def calc_cam(x, label, model):
     y = np.squeeze(y)
 
     # pull weights corresponding to the 1024 layers from model
-    weights = model.state_dict()['classifier.weight']
+    weights = model.state_dict()['module.classifier.weight']
     weights = weights.cpu().numpy()
     
-    bias = model.state_dict()['classifier.bias']
+    bias = model.state_dict()['module.classifier.bias']
     bias = bias.cpu().numpy()
 
     # Calculating cams for all classes at the same time, however for the bounding box test data set
@@ -112,9 +110,8 @@ def load_data(
         PATH_TO_IMAGES,
         LABEL,
         PATH_TO_MODEL,
-        fold,
-        POSITIVE_FINDINGS_ONLY=None,
-        covid=False):
+        POSITIVE_FINDINGS_ONLY,
+        fold):
     """
     Loads dataloader and torchvision model
 
@@ -133,10 +130,7 @@ def load_data(
     checkpoint = torch.load(PATH_TO_MODEL, map_location=lambda storage, loc: storage)
     model = checkpoint['model']
     del checkpoint
-    model = model.module.to(device)
-    # model.eval()
-    # for param in model.parameters():
-    #  param.requires_grad_(False)
+    model = model.to(device)
 
     # build dataloader on test
     mean = [0.485, 0.456, 0.406]
@@ -149,26 +143,19 @@ def load_data(
         transforms.Normalize(mean, std)
     ])
 
-    if not covid:
-        bounding_box_transform = CXR.RescaleBB(224, 1024)
+    bounding_box_transform = CXR.RescaleBB(224, 1024)
 
-        if not POSITIVE_FINDINGS_ONLY:
-            finding = "any"
-        else:
-            finding = LABEL
-
-        dataset = CXR.CXRDataset(
-            path_to_images=PATH_TO_IMAGES,
-            fold=fold,
-            transform=data_transform,
-            transform_bb=bounding_box_transform,
-            finding=finding)
+    if not POSITIVE_FINDINGS_ONLY:
+        finding = "any"
     else:
-        dataset = CXR.CXRDataset(
-            path_to_images=PATH_TO_IMAGES,
-            fold=fold,
-            transform=data_transform,
-            fine_tune=True)
+        finding = LABEL
+
+    dataset = CXR.CXRDataset(
+        path_to_images=PATH_TO_IMAGES,
+        fold=fold,
+        transform=data_transform,
+        transform_bb=bounding_box_transform,
+        finding=finding)
     
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=1, shuffle=False, num_workers=1)
@@ -176,7 +163,7 @@ def load_data(
     return iter(dataloader), model
 
 
-def show_next(cxr, model, label, inputs, filename, bbox):
+def show_next(dataloader, model, LABEL):
     """
     Plots CXR, activation map of CXR, and shows model probabilities of findings
 
@@ -187,8 +174,38 @@ def show_next(cxr, model, label, inputs, filename, bbox):
     Returns:
         None (plots output)
     """
+    FINDINGS = [
+        'Atelectasis',
+        'Cardiomegaly',
+        'Effusion',
+        'Infiltration',
+        'Mass',
+        'Nodule',
+        'Pneumonia',
+        'Pneumothorax',
+        'Consolidation',
+        'Edema',
+        'Emphysema',
+        'Fibrosis',
+        'Pleural_Thickening',
+        'Hernia']
+    
+    label_index = next(
+        (x for x in range(len(FINDINGS)) if FINDINGS[x] == LABEL))
 
-    raw_cam = calc_cam(inputs, label, model)
+    # get next iter from dataloader
+    try:
+        inputs, labels, filename, bbox = next(dataloader)
+    except StopIteration:
+        print("All examples exhausted - rerun cells above to generate new examples to review")
+        return None
+        
+    # get cam map
+    original = inputs.clone()
+    inputs = inputs.to(device)
+    original = original.to(device)
+
+    raw_cam = calc_cam(inputs, LABEL, model)
     print('range:')
     print(np.ptp(raw_cam))
     print('percerntile:')
@@ -199,11 +216,12 @@ def show_next(cxr, model, label, inputs, filename, bbox):
     raw_cam = np.array(Image.fromarray(raw_cam.squeeze()).resize((224, 224), Image.NEAREST))
 
     # bounding box as a mask
+    bbox = bbox.type(torch.cuda.IntTensor)
     bbox_mask = np.zeros(raw_cam.shape, dtype=bool)
     bbox_mask[bbox[0, 1]: bbox[0, 1] + bbox[0, 3], bbox[0, 0]: bbox[0, 0] + bbox[0, 2]] = True
 
     bbox_area_ratio = (bbox_mask.sum() / bbox_mask.size) * 100
-    activation_mask = np.logical_or(raw_cam >= 180, raw_cam <= 60)
+    activation_mask = np.logical_or(raw_cam >= 180 , raw_cam <= 60)
     heat_mask = np.logical_and(raw_cam < 180, raw_cam > 60)
 
     # finding components in heatmap
@@ -260,7 +278,11 @@ def show_next(cxr, model, label, inputs, filename, bbox):
     print('iobb:')
     print(iobb)
 
-    fig, (showcxr, heatmap) = plt.subplots(ncols=2, figsize=(14, 5))
+    # create predictions for label of interest and all labels
+    pred = torch.sigmoid(model(original)).data.cpu().numpy()[0]
+    predx = ['%.3f' % elem for elem in list(pred)]
+    
+    fig, (showcxr,heatmap) = plt.subplots(ncols=2, figsize=(14, 5))
     
     hmap = sns.heatmap(raw_cam.squeeze(),
                        cmap='viridis',
@@ -270,20 +292,25 @@ def show_next(cxr, model, label, inputs, filename, bbox):
                        annot=False,
                        zorder=2,
                        linewidths=0)
-        
-    hmap.imshow(cxr, zorder=1)  # put the map under the heatmap
-    hmap.axis('off')
-    hmap.set_title('Own Implementation for category {}'.format(label), fontsize=8)
 
-    rect = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
-                             facecolor='none', zorder=2)
+    cxr = inputs.data.cpu().numpy().squeeze().transpose(1, 2, 0)
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    cxr = std * cxr + mean
+    cxr = np.clip(cxr, 0, 1)
+        
+    hmap.imshow(cxr,
+                zorder=1) #put the map under the heatmap
+    hmap.axis('off')
+    hmap.set_title("P("+LABEL+")="+str(predx[label_index]))
+
+    rect = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r', facecolor='none', zorder=2)
     hmap.add_patch(rect)
 
     for patch in detected_patchs:
         hmap.add_patch(patch)
 
-    rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
-                                      facecolor='none', zorder=2)
+    rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r', facecolor='none', zorder=2)
 
     showcxr.imshow(cxr)
     showcxr.axis('off')
@@ -291,6 +318,14 @@ def show_next(cxr, model, label, inputs, filename, bbox):
     showcxr.add_patch(rect_original)
     # plt.savefig(str(LABEL+"_P"+str(predx[label_index])+"_file_"+filename[0]))
     plt.show()
+        
+    preds_concat = pd.concat([pd.Series(FINDINGS), pd.Series(predx), pd.Series(labels.numpy().astype(bool)[0])], axis=1)
+    preds = pd.DataFrame(data=preds_concat)
+    preds.columns = ["Finding", "Predicted Probability", "Ground Truth"]
+    preds.set_index("Finding", inplace=True)
+    preds.sort_values(by='Predicted Probability', inplace=True, ascending=False)
+    
+    return preds
 
 
 def eval_localization(dataloader, model, LABEL, map_thresholds, percentiles, ior_threshold=0.1, method='ior'):
@@ -479,107 +514,3 @@ def eval_localization(dataloader, model, LABEL, map_thresholds, percentiles, ior
 
     accuracy = num_correct_pred / num_images_examined
     return accuracy
-
-
-def plot_map(model, dataloader, label=None, covid=False, saliency_layer=None):
-    """Plot an example.
-
-    Args:
-        model: trained classification model
-        dataloader: containing input images.
-        label (str): Name of Category.
-        covid: whether the image is from the Covid Dataset or the Chesxtray Dataset.
-        saliency_layer: usually output of the last convolutional layer.
-    """
-
-    if not covid:
-        FINDINGS = [
-            'Atelectasis',
-            'Cardiomegaly',
-            'Effusion',
-            'Infiltration',
-            'Mass',
-            'Nodule',
-            'Pneumonia',
-            'Pneumothorax',
-            'Consolidation',
-            'Edema',
-            'Emphysema',
-            'Fibrosis',
-            'Pleural_Thickening',
-            'Hernia']
-    else:
-        FINDINGS = [
-            'NoCovid',
-            'LowCovid',
-            'MildCovid',
-            'SevereCovid']
-
-    try:
-        if not covid:
-            inputs, labels, filename, bbox = next(dataloader)
-            bbox = bbox.type(torch.cuda.IntTensor)
-        else:
-            inputs, labels, filename = next(dataloader)
-    except StopIteration:
-        print("All examples exhausted - rerun cells above to generate new examples to review")
-        return None
-
-    original = inputs.clone()
-    inputs = inputs.to(device)
-    original = original.to(device)
-    original.requires_grad = True
-
-    # create predictions for label of interest and all labels
-    pred = torch.sigmoid(model(original)).data.cpu().numpy()[0]
-    predx = ['%.3f' % elem for elem in list(pred)]
-
-    preds_concat = pd.concat([pd.Series(FINDINGS), pd.Series(predx), pd.Series(labels.numpy().astype(bool)[0])], axis=1)
-    preds = pd.DataFrame(data=preds_concat)
-    preds.columns = ["Finding", "Predicted Probability", "Ground Truth"]
-    preds.set_index("Finding", inplace=True)
-    preds.sort_values(by='Predicted Probability', inplace=True, ascending=False)
-
-    cxr = inputs.data.cpu().numpy().squeeze().transpose(1, 2, 0)
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    cxr = std * cxr + mean
-    cxr = np.clip(cxr, 0, 1)
-
-    if not covid:
-        show_next(cxr, model, label, inputs, filename, bbox)
-
-    if covid and label is None:
-        label = preds.loc[preds["Ground Truth"]==True].index[0]
-
-    category_id = FINDINGS.index(label)
-
-    saliency = grad_cam(model, original, category_id, saliency_layer=saliency_layer)
-
-    fig, (showcxr, heatmap) = plt.subplots(ncols=2, figsize=(14, 5))
-
-    showcxr.imshow(cxr)
-    showcxr.axis('off')
-    showcxr.set_title(filename[0])
-    if not covid:
-        rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
-                                          facecolor='none', zorder=2)
-        showcxr.add_patch(rect_original)
-
-    hmap = sns.heatmap(saliency.detach().cpu().numpy().squeeze(),
-                       cmap='viridis',
-                       annot=False,
-                       zorder=2,
-                       linewidths=0)
-    hmap.axis('off')
-    hmap.set_title('TorchRay grad cam for category {}'.format(label), fontsize=8)
-
-    plt.show()
-
-    print(preds)
-
-    if covid:
-        data_brixia = pd.read_csv("model/labels/metadata_global_v2.csv", sep=";")
-        data_brixia.set_index("Filename", inplace=True)
-        score = data_brixia.loc[filename[0].replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
-        print('Brixia 6 regions Score: ', '0' * (6 - len(score)) + score)
