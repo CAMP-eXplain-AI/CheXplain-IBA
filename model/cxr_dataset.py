@@ -16,17 +16,18 @@ class CXRDataset(Dataset):
             transform_bb=None,
             finding="any",
             fine_tune=False,
-            regression=False):
+            regression=False,
+            label_path="model/labels"):
 
         self.transform = transform
         self.transform_bb = transform_bb
         self.path_to_images = path_to_images
         if not fine_tune:
-            self.df = pd.read_csv("model/labels/nih_original_split.csv")
+            self.df = pd.read_csv(label_path + "/nih_original_split.csv")
         elif fine_tune and not regression:
-            self.df = pd.read_csv("model/labels/brixia_split_classification.csv")
+            self.df = pd.read_csv(label_path + "/brixia_split_classification.csv")
         else:
-            self.df = pd.read_csv("model/labels/brixia_split_regression.csv")
+            self.df = pd.read_csv(label_path + "/brixia_split_regression.csv")
         self.fold = fold
         self.fine_tune = fine_tune
         self.regression = regression
@@ -34,7 +35,7 @@ class CXRDataset(Dataset):
         if not fold == 'BBox':
             self.df = self.df[self.df['fold'] == fold]
         else:
-            bbox_images_df = pd.read_csv("model/labels/BBox_List_2017.csv")
+            bbox_images_df = pd.read_csv(label_path + "/BBox_List_2017.csv")
             self.df = pd.merge(left=self.df, right=bbox_images_df, how="inner", on="Image Index")
 
         if not finding == "any":  # can filter for positive findings of the kind described; useful for evaluation

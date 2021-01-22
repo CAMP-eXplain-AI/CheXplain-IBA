@@ -200,6 +200,7 @@ def load_monkeys(center_crop=True, size=224, pil=False):
 
 
 def plot_saliency_map(saliency_map, img=None, ax=None,
+                      colorbar=True,
                       colorbar_label='Bits / Pixel',
                       colorbar_fontsize=14,
                       min_alpha=0.2, max_alpha=0.7, vmax=None,
@@ -241,7 +242,6 @@ def plot_saliency_map(saliency_map, img=None, ax=None,
         colorbar_size = Fixed(colorbar_size)
     if type(colorbar_pad) == float:
         colorbar_pad = Fixed(colorbar_pad)
-    cax1 = ax1_divider.append_axes("right", size=colorbar_size, pad=colorbar_pad)
     if vmax is None:
         vmax = saliency_map.max()
     norm = mpl.colors.Normalize(vmin=0, vmax=vmax)
@@ -253,8 +253,10 @@ def plot_saliency_map(saliency_map, img=None, ax=None,
     if img is not None:
         hmap_jet[:, :, -1] = (max_alpha - min_alpha)*norm(saliency_map) + min_alpha
     ax.imshow(hmap_jet, alpha=max_alpha)
-    cbar = mpl.colorbar.ColorbarBase(cax1, cmap=cmap, norm=norm)
-    cbar.set_label(colorbar_label, fontsize=colorbar_fontsize)
+    if colorbar:
+      cax1 = ax1_divider.append_axes("right", size=colorbar_size, pad=colorbar_pad)
+      cbar = mpl.colorbar.ColorbarBase(cax1, cmap=cmap, norm=norm)
+      cbar.set_label(colorbar_label, fontsize=colorbar_fontsize)
 
     ax.set_xticks([])
     ax.set_yticks([])
