@@ -145,5 +145,19 @@ class RescaleBB(object):
 
         return transformed_sample
 
+class BrixiaScoreLocal:
+  def __init__(self, label_path):
+    self.data_brixia = pd.read_csv(label_path + "/metadata_global_v2.csv", sep=";")
+    self.data_brixia.set_index("Filename", inplace=True)
+    
+  def getScore(self, filename,print_score=False):
+    score = self.data_brixia.loc[filename.replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
+    score = '0' * (6 - len(score)) + score
+    if print_score:
+      print('Brixia 6 regions Score: ')
+      print(score[0], ' | ', score[3])
+      print(score[1], ' | ', score[4])
+      print(score[2], ' | ', score[5])
+    return list(map(int, score))
 
 
