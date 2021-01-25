@@ -38,6 +38,7 @@ def load_data(
         fold,
         POSITIVE_FINDINGS_ONLY=None,
         covid=False,
+        regression=False,
         label_path=None):
     """
     Loads dataloader and torchvision model
@@ -88,12 +89,13 @@ def load_data(
             transform_bb=bounding_box_transform,
             finding=finding,
             label_path=label_path)
-    else:
+    else:        
         dataset = CXR.CXRDataset(
             path_to_images=PATH_TO_IMAGES,
             fold=fold,
             transform=data_transform,
             fine_tune=True,
+            regression=regression,
             label_path=label_path)
     
     dataloader = torch.utils.data.DataLoader(
@@ -493,14 +495,17 @@ class Plotter:
   dev=None,
   informationbottleneck=None,
   iba_loss_function=None,
-  model=None):
+  model=None,
+  local_score_dataset=None):
     self.target = target
     self.dev = dev
     self.informationbottleneck = informationbottleneck
     self.iba_loss_function = iba_loss_function
     self.model = model
+    if local_score_dataset is not None:
+      self.local_score_dataset = local_score_dataset
 
-  def plot_map(self, model, dataloader, label, methods=None, covid=False, saliency_layer=None, overlay=False, axes_a=None):
+  def plot_map(self, model, dataloader, label, methods=None, covid=False, regression=False, saliency_layer=None, overlay=False, axes_a=None):
       """Plot an example.
 
       Args:
@@ -543,6 +548,8 @@ class Plotter:
               bbox = bbox.type(torch.cuda.IntTensor)
           else:
               inputs, labels, filename = next(dataloader)
+              # for consistant return value
+              bbox = None
       except StopIteration:
           print("All examples exhausted - rerun cells above to generate new examples to review")
           return None
@@ -583,7 +590,7 @@ class Plotter:
       if methods is None:
         methods = ['grad-cam backprop', 'gradient', 'deconvnet', 'excitation backprop', 'guided backprop', 'linear approx', 'original IB', 'IB with reversed mask']
 
-      # plot original data with bounding box
+      # plot original data with bounding box, else show brixia score
       showcxr = axes_a.flatten()[0]
       showcxr.imshow(cxr)
       showcxr.axis('off')
@@ -592,6 +599,17 @@ class Plotter:
           rect_original = patches.Rectangle((bbox[0, 0], bbox[0, 1]), bbox[0, 2], bbox[0, 3], linewidth=2, edgecolor='r',
                                             facecolor='none', zorder=2)
           showcxr.add_patch(rect_original)
+      else:
+            scores = self.local_score_dataset.getScore(filename[0])
+            color_list = ["green", "yellow", "red", "black"]
+            for idx, score in enumerate(scores):
+              row = (1-idx%3/2)*0.8 + 0.1
+              col = idx//3 * 0.8 + 0.1
+              plt.text(col, row, score, 
+                      color="white",
+                      fontsize = 36,
+                      bbox=dict(facecolor=color_list[score], alpha=0.7), 
+                      transform=showcxr.transAxes)
 
       # plot visulizations
       for method, hmap in zip(methods, axes_a.flatten()[1:]):
@@ -633,19 +651,6 @@ class Plotter:
             plot_saliency_map(np_saliency, cxr, ax = hmap, colorbar=False)
           hmap.axis('off')
           hmap.set_title('{} for category {}'.format(method, label), fontsize=12)
-          # redundant code, no bounding box for covid
-          # if covid:
-          #    hmap.add_patch(rect_original)
-
-          if covid:
-              data_brixia = pd.read_csv("model/labels/metadata_global_v2.csv", sep=";")
-              data_brixia.set_index("Filename", inplace=True)
-              score = data_brixia.loc[filename[0].replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
-              score = '0' * (6 - len(score)) + score
-              print('Brixia 6 regions Score: ')
-              print(score[0], ' | ', score[3])
-              print(score[1], ' | ', score[4])
-              print(score[2], ' | ', score[5])
 
       return inputs, labels, filename, bbox, preds
 
@@ -660,7 +665,6 @@ class Plotter:
 
     img = img[None].to(self.dev)
     self.informationbottleneck.reverse_lambda = reverse_lambda
-    self.informationbottleneck.beta = 0.5
     heatmap = self.informationbottleneck.analyze(img.squeeze(0), model_loss_closure_with_target(target))
 
     return heatmap
