@@ -579,6 +579,10 @@ class Plotter:
       cxr = std * cxr + mean
       cxr = np.clip(cxr, 0, 1)
 
+      # In case we want to visualize COVID, we use the highest probability as label for the visualization
+      if covid and label is None:
+          label = preds.loc[preds["Ground Truth"] == True].index[0]
+
       category_id = FINDINGS.index(label)
 
       # if not covid:
