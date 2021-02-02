@@ -538,9 +538,7 @@ class Plotter:
       else:
           FINDINGS = [
               'NoCovid',
-              'LowCovid',
-              'MildCovid',
-              'SevereCovid']
+              'Covid']
 
       try:
           if not covid:

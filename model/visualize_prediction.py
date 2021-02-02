@@ -511,9 +511,7 @@ def plot_map(model, dataloader, label=None, covid=False, saliency_layer=None):
     else:
         FINDINGS = [
             'NoCovid',
-            'LowCovid',
-            'MildCovid',
-            'SevereCovid']
+            'Covid']
 
     try:
         if not covid:
