@@ -38,11 +38,6 @@ class CXRDataset(Dataset):
             bbox_images_df = pd.read_csv(label_path + "/BBox_List_2017.csv")
             self.df = pd.merge(left=self.df, right=bbox_images_df, how="inner", on="Image Index")
 
-        if not finding == "any":  # can filter for positive findings of the kind described; useful for evaluation
-            self.df = self.df[self.df['Finding Label'] == finding]
-
-        self.df = self.df.set_index("Image Index")
-
         if not self.fine_tune:
             self.PRED_LABEL = [
                 'Atelectasis',
@@ -65,6 +60,13 @@ class CXRDataset(Dataset):
                 'LowCovid',
                 'MildCovid',
                 'SevereCovid']
+
+        if not finding == "any" and not fine_tune:  # can filter for positive findings of the kind described; useful for evaluation
+            self.df = self.df[self.df['Finding Label'] == finding]
+        elif not finding == "any" and fine_tune and not regression:
+            self.df = self.df[self.df['BrixiaScoreBinary'] == self.PRED_LABEL.index(finding)]
+
+        self.df = self.df.set_index("Image Index")
 
     def __len__(self):
         return len(self.df)

@@ -89,11 +89,17 @@ def load_data(
             transform_bb=bounding_box_transform,
             finding=finding,
             label_path=label_path)
-    else:        
+    else:
+        if not POSITIVE_FINDINGS_ONLY:
+            finding = "any"
+        else:
+            finding = LABEL
+
         dataset = CXR.CXRDataset(
             path_to_images=PATH_TO_IMAGES,
             fold=fold,
             transform=data_transform,
+            finding=finding,
             fine_tune=True,
             regression=regression,
             label_path=label_path)
