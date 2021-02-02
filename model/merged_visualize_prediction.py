@@ -89,11 +89,16 @@ def load_data(
             transform_bb=bounding_box_transform,
             finding=finding,
             label_path=label_path)
-    else:        
+    else:
+        if not POSITIVE_FINDINGS_ONLY:
+            finding = "any"
+        else:
+            finding = LABEL
         dataset = CXR.CXRDataset(
             path_to_images=PATH_TO_IMAGES,
             fold=fold,
             transform=data_transform,
+            finding=finding,
             fine_tune=True,
             regression=regression,
             label_path=label_path)
@@ -573,10 +578,6 @@ class Plotter:
       std = np.array([0.229, 0.224, 0.225])
       cxr = std * cxr + mean
       cxr = np.clip(cxr, 0, 1)
-
-      # In case we want to visualize COVID, we use the highest probability as label for the visualization
-      if covid and label is None:
-          label = preds.loc[preds["Ground Truth"] == True].index[0]
 
       category_id = FINDINGS.index(label)
 
