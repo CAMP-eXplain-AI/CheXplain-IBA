@@ -124,9 +124,7 @@ def train_model(
     else:
         PRED_LABEL = [
             'NoCovid',
-            'LowCovid',
-            'MildCovid',
-            'SevereCovid']
+            'Covid']
 
     if not regression:
         tensorboard_writer_auc = {}
@@ -287,7 +285,7 @@ def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, regression=Fals
     std = [0.229, 0.224, 0.225]
 
     N_LABELS = 14  # we are predicting 14 labels
-    N_COVID_LABELS = 4  # we are predicting 4 COVID labels
+    N_COVID_LABELS = 2  # we are predicting 2 COVID labels
 
     # define torchvision transforms
     data_transforms = {

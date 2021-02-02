@@ -62,9 +62,7 @@ class CXRDataset(Dataset):
         else:
             self.PRED_LABEL = [
                 'NoCovid',
-                'LowCovid',
-                'MildCovid',
-                'SevereCovid']
+                'Covid']
 
     def __len__(self):
         return len(self.df)
@@ -86,7 +84,7 @@ class CXRDataset(Dataset):
                                        ].iloc[idx].astype('int')
         elif self.fine_tune and not self.regression:
             covid_label = np.zeros(len(self.PRED_LABEL), dtype=int)
-            covid_label[self.df['BrixiaScoreGlobal'].iloc[idx]] = 1
+            covid_label[self.df['BrixiaScoreBinary'].iloc[idx]] = 1
         else:
             ground_truth = np.array(self.df['BrixiaScoreGlobal'].iloc[idx].astype('float32'))
 
@@ -149,7 +147,7 @@ class BrixiaScoreLocal:
   def __init__(self, label_path):
     self.data_brixia = pd.read_csv(label_path + "/metadata_global_v2.csv", sep=";")
     self.data_brixia.set_index("Filename", inplace=True)
-    
+
   def getScore(self, filename,print_score=False):
     score = self.data_brixia.loc[filename.replace(".jpg", ".dcm"), "BrixiaScore"].astype(str)
     score = '0' * (6 - len(score)) + score
