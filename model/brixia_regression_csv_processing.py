@@ -19,5 +19,5 @@ data_test['fold'] = 'test'
 data_brixia = data_train.append(data_val)
 data_brixia = data_brixia.append(data_test).sort_index()
 
-data_brixia.to_csv('model/labels/brixia_split.csv', index=False)
+data_brixia.to_csv('model/labels/brixia_split_regression.csv', index=False)
 
