@@ -543,10 +543,8 @@ class Plotter:
               'Hernia']
       else:
           FINDINGS = [
-              'NoCovid',
-              'LowCovid',
-              'MildCovid',
-              'SevereCovid']
+              'Detector2',
+              'Detector3']
 
       try:
           if not covid:

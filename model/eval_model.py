@@ -86,10 +86,8 @@ def make_pred_multilabel(dataloader, model, save_as_csv=False, fine_tune=False):
                         continue
         else:
             if column not in [
-                'NoCovid',
-                'LowCovid',
-                'MildCovid',
-                    'SevereCovid']:
+                'Detector2',
+                    'Detector3']:
                         continue
         actual = true_df[column]
         pred = pred_df["prob_" + column]
