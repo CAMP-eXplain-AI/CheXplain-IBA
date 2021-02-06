@@ -64,7 +64,7 @@ class CXRDataset(Dataset):
         if not finding == "any" and not fine_tune:  # can filter for positive findings of the kind described; useful for evaluation
             self.df = self.df[self.df['Finding Label'] == finding]
         elif not finding == "any" and fine_tune and not regression:
-            self.df = self.df[self.df['BrixiaScoreBinary'] == self.PRED_LABEL.index(finding)]
+            self.df = self.df[self.df['BrixiaScoreGlobal'] == self.PRED_LABEL.index(finding)]
 
         self.df = self.df.set_index("Image Index")
 
