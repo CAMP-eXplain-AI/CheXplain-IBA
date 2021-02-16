@@ -56,13 +56,14 @@ class CXRDataset(Dataset):
                 'Hernia']
         else:
             self.PRED_LABEL = [
+                'Detector1',
                 'Detector2',
                 'Detector3']
 
         if not finding == "any" and not fine_tune:  # can filter for positive findings of the kind described; useful for evaluation
             self.df = self.df[self.df['Finding Label'] == finding]
         elif not finding == "any" and fine_tune and not regression:
-            self.df = self.df[self.df['BrixiaScore'+finding] == 1]
+            self.df = self.df[self.df[finding] == 1]
 
         self.df = self.df.set_index("Image Index")
 
@@ -86,8 +87,9 @@ class CXRDataset(Dataset):
                                        ].iloc[idx].astype('int')
         elif self.fine_tune and not self.regression:
             covid_label = np.zeros(len(self.PRED_LABEL), dtype=int)
-            covid_label[0] = self.df['BrixiaScoreDetector2'].iloc[idx]
-            covid_label[1] = self.df['BrixiaScoreDetector3'].iloc[idx]
+            covid_label[0] = self.df['Detector1'].iloc[idx]
+            covid_label[1] = self.df['Detector2'].iloc[idx]
+            covid_label[2] = self.df['Detector3'].iloc[idx]
         else:
             ground_truth = np.array(self.df['BrixiaScoreGlobal'].iloc[idx].astype('float32'))
 
