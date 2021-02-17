@@ -39,7 +39,8 @@ def load_data(
         POSITIVE_FINDINGS_ONLY=None,
         covid=False,
         regression=False,
-        label_path=None):
+        label_path=None,
+        return_dataloader=True):
     """
     Loads dataloader and torchvision model
 
@@ -49,7 +50,7 @@ def load_data(
         PATH_TO_MODEL: path to downloaded pretrained model or your own retrained model
         POSITIVE_FINDINGS_ONLY: dataloader will show only examples + for LABEL pathology if True, otherwise shows positive
                                 and negative examples if false
-
+        return_dataloader: if true then return dataloader instead of dataset
     Returns:
         dataloader: dataloader with test examples to show
         model: fine tuned torchvision densenet-121
@@ -103,11 +104,14 @@ def load_data(
             fine_tune=True,
             regression=regression,
             label_path=label_path)
-    
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=1, shuffle=False, num_workers=1)
-    
-    return iter(dataloader), model
+
+    if return_dataloader:
+        dataloader = torch.utils.data.DataLoader(
+            dataset, batch_size=1, shuffle=False, num_workers=1)
+
+        return iter(dataloader), model
+    else:
+        return dataset, model
 
 
 def show_next(cxr, model, label, inputs, filename, bbox):
