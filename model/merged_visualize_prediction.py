@@ -689,20 +689,20 @@ class Plotter:
   def mse_loss_with_target(self, target):
     def model_loss_closure(input):
       loss = torch.nn.MSELoss()
-      mse_loss = loss(model(input), torch.tensor(target).to(self.dev))
+      mse_loss = loss(self.model(input), torch.tensor(target).to(self.dev))
       return mse_loss
     return model_loss_closure
 
   def mse_loss_maximize_score(self, target=None):
     def model_loss_closure(input):
       loss = torch.nn.MSELoss()
-      mse_loss = -loss(model(input), torch.tensor(0.).to(self.dev))
+      mse_loss = -loss(self.model(input), torch.tensor(0.).to(self.dev))
       return mse_loss
     return model_loss_closure
   
   def mse_loss_minimal_deviation(self, target=None):
     def model_loss_closure(input):
       loss = torch.nn.MSELoss()
-      mse_loss = loss(model(input), original_model(input))
+      mse_loss = loss(self.model(input), self.original_model(input))
       return mse_loss
     return model_loss_closure
