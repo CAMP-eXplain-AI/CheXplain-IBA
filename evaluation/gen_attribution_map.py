@@ -1,3 +1,4 @@
+import argparse
 import torch
 from torch.utils.data import DataLoader, Subset
 import matplotlib.pyplot as plt
@@ -6,13 +7,16 @@ from PIL import Image
 from skimage.transform import resize
 import numpy as np
 import mmcv
+from tqdm.auto import tqdm
 
 import cxr_dataset as CXR
 import merged_visualize_prediction as V
 
 from torchray.attribution.grad_cam import grad_cam
-from torchray.attribution.guided_backprop import guided_backprop
+from torchray.attribution.gradient import gradient
+from torchray.attribution.excitation_backprop import excitation_backprop
 from torchray.attribution.extremal_perturbation import extremal_perturbation, contrastive_reward
+from captum.attr import IntegratedGradients
 from IBA.pytorch import IBA
 
 prak_dir = '/content/drive/MyDrive/Prak_MLMI'
@@ -45,15 +49,27 @@ def sample_dataset(dataset, num_samples=100, seed=None):
     return small_dataset
 
 
-def get_attribution(model, input, target, method, device):
+def get_attribution(model, input, target, method, device, saliency_layer='features.norm5'):
     input = input.to(device)
     input.requires_grad = True
 
     # get attribution
     if method == "grad_cam":
-        saliency_map = grad_cam(model, input, target, saliency_layer='features.norm5')
+        saliency_map = grad_cam(model, input, target, saliency_layer=saliency_layer)
     elif method == "extremal_perturbation":
         saliency_map, _ = extremal_perturbation(model, input, target)
+    # elif method == 'ib':
+    #   saliency = self.iba(original, labels.squeeze(), model_loss_closure_with_target=self.softmax_crossentropy_loss_with_target)
+    # elif method == 'reverse_ib':
+    #   saliency = self.iba(original, labels.squeeze(), reverse_lambda=True, model_loss_closure_with_target=self.softmax_crossentropy_loss_with_target)
+    elif method == "gradient":
+        saliency_map = gradient(model, input, target)
+    elif method == "excitation_backprop":
+        saliency_map = excitation_backprop(model, input, target, saliency_layer=saliency_layer)
+    elif method == "integrated_gradients":
+        ig = IntegratedGradients(model)
+        saliency_map, _ = ig.attribute(input, target=target, return_convergence_delta=True)
+        saliency_map = saliency_map.squeeze().mean(0)
 
     saliency_map = saliency_map.detach().cpu().numpy().squeeze()
     shape = (224, 224)
@@ -61,12 +77,14 @@ def get_attribution(model, input, target, method, device):
     return saliency_map
 
 
-def save_attribution_map(mask, out_file=None):
+def save_attribution_map(mask, out_file=None, show=False):
     if mask.dtype in (float, np.float32, np.float16, np.float128):
-        assert mask.max() <= 1.0
+        if mask.max() > 1.0:
+            mask /= mask.max()
         mask = (mask * 255).astype(np.uint8)
-    plt.imshow(mask)
-    plt.axis('off')
+    if show:
+        plt.imshow(mask)
+        plt.axis('off')
 
     if out_file is not None:
         dir_name = os.path.abspath(os.path.dirname(out_file))
@@ -78,7 +96,7 @@ def save_attribution_map(mask, out_file=None):
 def gen_attribution(dataloader, model, attribution_method, out_dir, device, covid=False):
     if not covid:
         category_list = FINDINGS
-        for category in category_list:
+        for category in tqdm(category_list, desc="Categories"):
 
             # get data inside category
             dataloader, model = V.load_data(
@@ -91,8 +109,10 @@ def gen_attribution(dataloader, model, attribution_method, out_dir, device, covi
                 return_dataloader=True)
 
             # generate attribution map for each image inside this category
-            for data in dataloader:
+            for data in tqdm(dataloader, desc="Samples"):
                 input, label, filename, bbox = data
                 category_id = FINDINGS.index(category)
                 mask = get_attribution(model, input, category_id, attribution_method, device)
                 save_attribution_map(mask, out_file=os.path.join(out_dir, attribution_method, category, filename[0]))
+
+if __name__ == "__main__":

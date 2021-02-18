@@ -52,7 +52,7 @@ class SensitivityN(BaseEvaluation):
         masks = []
         h, w = image_size
         for _ in range(num_masks):
-            idxs = np.unravel_index(np.random.choice(h * w, self.n), (h, w))
+            idxs = np.unravel_index(np.random.choice(h * w, self.n), (h, w), replace=False)
             indices.append(idxs)
             mask = np.zeros((h, w))
             mask[idxs] = 1
