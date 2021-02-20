@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('image_path', default="", help='config file of the attribution method')
     parser.add_argument('model_path', default="", help='directory of the heatmaps')
     parser.add_argument('label_path', default="", help='directory to save the result file')
+    parser.add_argument('file_name', default="sensitivity_n.json", help='directory to save the result file')
     args = parser.parse_args()
     return args
 
@@ -92,4 +93,4 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
 
 if __name__ == '__main__':
     args = parse_args()
-    results = evaluation(args.heatmap_dir, args.out_dir, args.image_path, args.model_path, args.label_path)
+    results = evaluation(args.heatmap_dir, args.out_dir, args.image_path, args.model_path, args.label_path, args.file_name)
