@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from iba.evaluation.base import BaseEvaluation
+from evaluation.base import BaseEvaluation
 
 
 class SensitivityN(BaseEvaluation):

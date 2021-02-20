@@ -1,4 +1,3 @@
-from iba.models.net import Attributer
 import torch
 import numpy as np
 from skimage.metrics import structural_similarity
