@@ -25,8 +25,7 @@ import pandas as pd
 from scipy import ndimage
 
 # import other modules
-import cxr_dataset as CXR
-
+import model.cxr_dataset as CXR
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

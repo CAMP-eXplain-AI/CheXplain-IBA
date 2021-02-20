@@ -50,13 +50,13 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Hernia']
 
         # generate evaluation
-        log_list = np.logspace(0, 4.7, num=1)
+        log_list = np.logspace(0, 4.7, num=50)
         results = {}
 
-        for n in log_list:
+        for n in tqdm(log_list):
             score_diffs_all = []
             sum_attrs_all = []
-            for category in tqdm(category_list, desc="Categories"):
+            for category in category_list:
 
                 # get data inside category
                 dataloader, model = V.load_data(
@@ -71,7 +71,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 target = category_list.index(category)
                 evaluator = SensitivityN(model, (224, 224), int(n))
 
-                for data in tqdm(dataloader, desc="Samples"):
+                for data in dataloader:
                     input, label, filename, bbox = data
 
                     heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
