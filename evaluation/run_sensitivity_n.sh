@@ -6,4 +6,4 @@ label_path='~/informationbottleneck/model/labels'
 heatmap_dir='~/results/ib'
 out_dir='~'
 
-python eval_sensitivity_n.py
+python eval_sensitivity_n.py heatmap_dir out_dir PATH_TO_IMAGES PATH_TO_MODEL label_path
