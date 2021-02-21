@@ -3,8 +3,8 @@ import torchvision
 import numpy as np
 from scipy.integrate import trapezoid
 
-from iba.evaluation.base import BaseEvaluation
-from iba.evaluation.perturber import PixelPerturber
+from evaluation.base import BaseEvaluation
+from evaluation.perturber import PixelPerturber
 
 
 class InsertionDeletion(BaseEvaluation):
