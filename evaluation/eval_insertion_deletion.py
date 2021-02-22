@@ -34,20 +34,7 @@ def parse_args():
 def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="insertion_deletion.json", device='cuda:0', covid=False):
     if not covid:
         category_list = [
-            'Atelectasis',
-            'Cardiomegaly',
-            'Effusion',
-            'Infiltration',
-            'Mass',
-            'Nodule',
-            'Pneumonia',
-            'Pneumothorax',
-            'Consolidation',
-            'Edema',
-            'Emphysema',
-            'Fibrosis',
-            'Pleural_Thickening',
-            'Hernia']
+            'Cardiomegaly']
 
         # generate evaluation
         evaluation_metrics = ["insertion", "deletion"]
