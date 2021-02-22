@@ -34,7 +34,20 @@ def parse_args():
 def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="insertion_deletion.json", device='cuda:0', covid=False):
     if not covid:
         category_list = [
-            'Cardiomegaly']
+            'Atelectasis',
+            'Cardiomegaly',
+            'Effusion',
+            'Infiltration',
+            'Mass',
+            'Nodule',
+            'Pneumonia',
+            'Pneumothorax',
+            'Consolidation',
+            'Edema',
+            'Emphysema',
+            'Fibrosis',
+            'Pleural_Thickening',
+            'Hernia']
 
         # generate evaluation
         evaluation_metrics = ["insertion", "deletion"]
@@ -70,6 +83,8 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 insertion_auc = np.append(insertion_auc, np.array(ins_auc))
                 del_auc = res_single['del_auc']
                 deletion_auc = np.append(deletion_auc, np.array(del_auc))
+                results.update({"insertion auc_{}".format(category): insertion_auc})
+                results.update({"deletion auc_{}".format(category): deletion_auc})
         mean_insertion_auc = np.mean(insertion_auc)
         mean_deletion_auc = np.mean(deletion_auc)
         results.update({"insertion auc": mean_insertion_auc})
