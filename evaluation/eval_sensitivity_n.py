@@ -17,7 +17,7 @@ import model.merged_visualize_prediction as V
 import cv2
 import mmcv
 from evaluation.sensitivity_n import SensitivityN
-
+from evaluation.regression_sensitivity_n import SensitivityN as SensitivityNRegression
 
 def parse_args():
     parser = ArgumentParser('Sensitivity-N evaluation')
@@ -31,7 +31,8 @@ def parse_args():
     return args
 
 
-def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="sensitivity_n.json", device='cuda:0', covid=False):
+def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="sensitivity_n.json",
+               device='cuda:0', covid=False, regression=False):
     if not covid:
         category_list = [
             'Atelectasis',
@@ -48,17 +49,20 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Fibrosis',
             'Pleural_Thickening',
             'Hernia']
+    else:
+        category_list = ["regression"]
 
-        # generate evaluation
-        log_list = np.logspace(0, 4.7, num=50)
-        results = {}
+    # generate evaluation
+    log_list = np.logspace(0, 4.7, num=50)
+    results = {}
 
-        for n in tqdm(log_list):
-            score_diffs_all = []
-            sum_attrs_all = []
-            for category in category_list:
+    for n in tqdm(log_list):
+        score_diffs_all = []
+        sum_attrs_all = []
+        for category in category_list:
 
-                # get data inside category
+            # get data inside category
+            if not covid:
                 dataloader, model = V.load_data(
                     image_path,
                     category,
@@ -68,26 +72,56 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                     label_path=label_path,
                     return_dataloader=True)
 
+            elif covid and regression:
+                dataloader, model = V.load_data(
+                    image_path,
+                    category,
+                    model_path,
+                    'test',
+                    POSITIVE_FINDINGS_ONLY=False,
+                    covid=True,
+                    regression=True,
+                    label_path=label_path,
+                    return_dataloader=True)
+
+            elif covid and not regression:
+                dataloader, model = V.load_data(
+                    image_path,
+                    category,
+                    model_path,
+                    'test',
+                    POSITIVE_FINDINGS_ONLY=False,
+                    covid=True,
+                    regression=False,
+                    label_path=label_path,
+                    return_dataloader=True)
+
+            if regression:
+                evaluator = SensitivityNRegression(model, (224, 224), int(n))
+            else:
                 target = category_list.index(category)
                 evaluator = SensitivityN(model, (224, 224), int(n))
 
-                for data in dataloader:
-                    input, label, filename, bbox = data
+            for data in dataloader:
+                input, label, filename, bbox = data
 
-                    heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
-                    heatmap = torch.from_numpy(heatmap).to(device) / 255.0
+                heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
+                heatmap = torch.from_numpy(heatmap).to(device) / 255.0
 
+                if regression:
+                    res_single = evaluator.evaluate(heatmap, input.squeeze().to(device))
+                else:
                     res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target)
-                    score_diffs = res_single['score_diffs']
-                    sum_attrs = res_single['sum_attributions']
-                    score_diffs_all.append(score_diffs)
-                    sum_attrs_all.append(sum_attrs)
-            score_diffs_all = np.concatenate(score_diffs_all, 0)
-            sum_attrs_all = np.concatenate(sum_attrs_all, 0)
-            corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
-            results.update({n: corr_matrix[1, 0]})
-            print("corr for {} is {}".format(n, corr_matrix[1, 0]))
-        mmcv.dump(results, file=os.path.join(out_dir, file_name))
+                score_diffs = res_single['score_diffs']
+                sum_attrs = res_single['sum_attributions']
+                score_diffs_all.append(score_diffs)
+                sum_attrs_all.append(sum_attrs)
+        score_diffs_all = np.concatenate(score_diffs_all, 0)
+        sum_attrs_all = np.concatenate(sum_attrs_all, 0)
+        corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
+        results.update({n: corr_matrix[1, 0]})
+        print("corr for {} is {}".format(n, corr_matrix[1, 0]))
+    mmcv.dump(results, file=os.path.join(out_dir, file_name))
     return results
 
 if __name__ == '__main__':
