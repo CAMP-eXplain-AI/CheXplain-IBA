@@ -83,6 +83,9 @@ class InsertionDeletion(BaseEvaluation):
         Returns:
             np.ndarray:
         """
+        # get original score
+        device = next(self.classifier.parameters()).device
+        original_score = self.classifier(perturber.current.to(device))
         scores_after_perturb = []
         replaced_pixels = 0
         while replaced_pixels < num_pixels:
@@ -103,10 +106,9 @@ class InsertionDeletion(BaseEvaluation):
                     break
 
             # get score after perturb
-            device = next(self.classifier.parameters()).device
             perturbed_imgs = torch.stack(perturbed_imgs)
             logits = self.classifier(perturbed_imgs.to(device))
-            score_after = logits[:, target]
+            score_after = logits[:, 0]
             scores_after_perturb = np.concatenate(
-                (scores_after_perturb, score_after.detach().cpu().numpy()))
+                (scores_after_perturb, score_after.detach().cpu().numpy() - original_score))
         return scores_after_perturb
