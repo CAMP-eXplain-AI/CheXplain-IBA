@@ -22,7 +22,7 @@
 
 ######################################### regression model ###############################################
 PATH_TO_IMAGES="/home/ubuntu/BrixIAsmall"
-PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best'
+PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/regression_checkpoint_best'
 label_path='/home/ubuntu/informationbottleneck/model/labels'
 heatmap_dir='/home/ubuntu/results/mse_loss_with_target'
 out_dir='/home/ubuntu'

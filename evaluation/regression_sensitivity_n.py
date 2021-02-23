@@ -31,7 +31,7 @@ class SensitivityN(BaseEvaluation):
         output_pertubated = output[:-1]
         output_clean = output[-1:]
 
-        diff = output_clean[:] - output_pertubated[:]
+        diff = output_clean[:, 0] - output_pertubated[:, 0]
         score_diffs = diff.cpu().numpy()
         sum_attributions = sum_attributions.cpu().numpy()
 
