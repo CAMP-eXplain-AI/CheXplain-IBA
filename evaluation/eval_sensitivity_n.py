@@ -107,7 +107,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 evaluator = SensitivityN(model, (224, 224), int(n))
 
             for data in dataloader:
-                input, label, filename, bbox = data
+                if covid:
+                    input, label, filename = data
+                else:
+                    input, label, filename, bbox = data
 
                 heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
                 heatmap = torch.from_numpy(heatmap).to(device) / 255.0
