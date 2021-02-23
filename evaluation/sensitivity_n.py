@@ -5,7 +5,7 @@ from evaluation.base import BaseEvaluation
 
 class SensitivityN(BaseEvaluation):
 
-    def __init__(self, classifier, img_size, n, num_masks=100):
+    def __init__(self, classifier, img_size, n, num_masks=30):
         self.classifier = classifier
         self.n = n
         self.device = next(self.classifier.parameters()).device
