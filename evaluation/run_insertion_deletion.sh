@@ -43,3 +43,9 @@ out_dir='/home/ubuntu'
 file_name='insertion_deletion_minimal_deviation.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --covid --regression
+
+heatmap_dir='/home/ubuntu/results/mse_loss_minimal_deviation'
+out_dir='/home/ubuntu'
+file_name='sensitivity_n_minimal_deviation.json'
+
+python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --covid --regression
