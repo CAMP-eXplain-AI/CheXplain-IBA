@@ -28,11 +28,11 @@ def parse_args():
     parser.add_argument('model_path', default="", help='directory of the heatmaps')
     parser.add_argument('label_path', default="", help='directory to save the result file')
     parser.add_argument('file_name', default="insertion_deletion.json", help='directory to save the result file')
-    args = parser.parse_args()
     parser.add_argument("--covid", help="covid dataset",
                         action="store_true")
     parser.add_argument("--regression", help="regression model",
                         action="store_true")
+    args = parser.parse_args()
     return args
 
 
