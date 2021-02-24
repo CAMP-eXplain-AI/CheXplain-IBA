@@ -106,7 +106,7 @@ class InsertionDeletion(BaseEvaluation):
             device = next(self.classifier.parameters()).device
             perturbed_imgs = torch.stack(perturbed_imgs)
             logits = self.classifier(perturbed_imgs.to(device))
-            score_after = logits[:, target]
+            score_after = torch.nn.functional.sigmoid(logits[:, target])
             scores_after_perturb = np.concatenate(
                 (scores_after_perturb, score_after.detach().cpu().numpy()))
         return scores_after_perturb

@@ -108,5 +108,5 @@ class InsertionDeletion(BaseEvaluation):
             logits = self.classifier(perturbed_imgs.to(device))
             score_after = logits[:, 0]
             scores_after_perturb = np.concatenate(
-                (scores_after_perturb, score_after.detach().cpu().numpy() - original_score))
+                (scores_after_perturb, np.absolute(score_after.detach().cpu().numpy() - original_score)))
         return scores_after_perturb
