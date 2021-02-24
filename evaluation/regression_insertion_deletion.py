@@ -83,7 +83,7 @@ class InsertionDeletion(BaseEvaluation):
         """
         # get original score
         device = next(self.classifier.parameters()).device
-        original_score = self.classifier(perturber.current.expand(0).to(device))[:, 0]
+        original_score = self.classifier(perturber.current.expand(1, -1, -1, -1).to(device))[:, 0]
         scores_after_perturb = []
         replaced_pixels = 0
         while replaced_pixels < num_pixels:
