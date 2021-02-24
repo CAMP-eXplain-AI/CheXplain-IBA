@@ -114,10 +114,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
         for data in tqdm(dataloader, desc="Samples"):
             if covid:
                 input, label, filename = data
-                heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
+                heatmap = cv2.imread(os.path.join(heatmap_dir, filename[0]), cv2.IMREAD_UNCHANGED)
             else:
                 input, label, filename, bbox = data
-                heatmap = cv2.imread(os.path.join(heatmap_dir, filename[0]), cv2.IMREAD_UNCHANGED)
+                heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
             heatmap = torch.from_numpy(heatmap).to(device) / 255.0
 
             if regression:
