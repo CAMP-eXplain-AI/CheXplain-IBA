@@ -17,13 +17,12 @@ class InsertionDeletion(BaseEvaluation):
             int(2 * sigma - 1), sigma)
 
     @torch.no_grad()
-    def evaluate(self, heatmap, img, target):  # noqa
+    def evaluate(self, heatmap, img):  # noqa
         """# TODO to add docs
 
         Args:
             heatmap (Tensor): heatmap with shape (H, W) or (3, H, W).
             img (Tensor): image with shape (3, H, W).
-            target (int): class index of the image.
 
         Returns:
             dict[str, Union[Tensor, np.array, float]]: a dictionary containing following fields
@@ -47,13 +46,13 @@ class InsertionDeletion(BaseEvaluation):
         # apply deletion game
         deletion_perturber = PixelPerturber(img, torch.zeros_like(img))
         deletion_scores = self._procedure_perturb(deletion_perturber,
-                                                  num_pixels, indices, target)
+                                                  num_pixels, indices)
 
         # apply insertion game
         blurred_img = self.gaussian_blurr(img)
         insertion_perturber = PixelPerturber(blurred_img, img)
         insertion_scores = self._procedure_perturb(insertion_perturber,
-                                                   num_pixels, indices, target)
+                                                   num_pixels, indices)
 
         # calculate AUC
         insertion_auc = trapezoid(insertion_scores,
