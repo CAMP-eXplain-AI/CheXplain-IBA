@@ -121,9 +121,9 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             heatmap = torch.from_numpy(heatmap).to(device) / 255.0
 
             if regression:
-                res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target)
-            else:
                 res_single = evaluator.evaluate(heatmap, input.squeeze().to(device))
+            else:
+                res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target)
             ins_auc = res_single['ins_auc']
             insertion_auc = np.append(insertion_auc, np.array(ins_auc))
             del_auc = res_single['del_auc']
