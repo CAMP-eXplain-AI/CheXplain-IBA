@@ -71,14 +71,13 @@ class InsertionDeletion(BaseEvaluation):
             "del_auc": deletion_auc
         }
 
-    def _procedure_perturb(self, perturber, num_pixels, indices, target):
+    def _procedure_perturb(self, perturber, num_pixels, indices):
         """ # TODO to add docs
 
         Args:
             perturber (PixelPerturber):
             num_pixels (int):
             indices (tuple):
-            target (int):
 
         Returns:
             np.ndarray:
