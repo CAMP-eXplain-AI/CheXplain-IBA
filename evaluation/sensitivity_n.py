@@ -28,7 +28,7 @@ class SensitivityN(BaseEvaluation):
         input_imgs = pertubated_imgs + [img]
         with torch.no_grad():
             input_imgs = torch.stack(input_imgs).to(self.device)
-            output = self.classifier(input_imgs)
+            output = torch.nn.functional.sigmoid(self.classifier(input_imgs))
         output_pertubated = output[:-1]
         output_clean = output[-1:]
 
