@@ -31,12 +31,15 @@ def parse_args():
                         action="store_true")
     parser.add_argument("--regression", help="regression model",
                         action="store_true")
+    parser.add_argument("--blur", help="use blurred image as baseline",
+                        action="store_true")
+    parser.add_argument("sigma", default=4., help="sigma for gaussian blur")
     args = parser.parse_args()
     return args
 
 
 def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="sensitivity_n.json",
-               device='cuda:0', covid=False, regression=False):
+               device='cuda:0', covid=False, regression=False, blur=False, sigma=4.):
     if not covid:
         category_list = [
             'Atelectasis',
@@ -63,7 +66,9 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
     for n in tqdm(log_list):
         score_diffs_all = []
         sum_attrs_all = []
+        corr_all = np.array([])
         for category in category_list:
+            corr_category = np.array([])
 
             # get data inside category
             if not covid:
@@ -116,22 +121,28 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 heatmap = torch.from_numpy(heatmap).to(device) / 255.0
 
                 if regression:
-                    res_single = evaluator.evaluate(heatmap, input.squeeze().to(device))
+                    res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), calculate_corr=True)
                 else:
-                    res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target)
-                score_diffs = res_single['score_diffs']
-                sum_attrs = res_single['sum_attributions']
-                score_diffs_all.append(score_diffs)
-                sum_attrs_all.append(sum_attrs)
-        score_diffs_all = np.concatenate(score_diffs_all, 0)
-        sum_attrs_all = np.concatenate(sum_attrs_all, 0)
-        corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
-        results.update({n: corr_matrix[1, 0]})
-        print("corr for {} is {}".format(n, corr_matrix[1, 0]))
+                    res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target, calculate_corr=True)
+                corr = res_single['correlation']
+                # score_diffs = res_single['score_diffs']
+                # sum_attrs = res_single['sum_attributions']
+                # score_diffs_all.append(score_diffs)
+                # sum_attrs_all.append(sum_attrs)
+                corr_category = np.append(corr_category, np.array([corr]))
+                corr_all = np.append(corr_all, np.array([corr]))
+            results.update({"{}_{}".format(n, category): corr_category})
+        # score_diffs_all = np.concatenate(score_diffs_all, 0)
+        # sum_attrs_all = np.concatenate(sum_attrs_all, 0)
+        # corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
+        # results.update({n: corr_matrix[1, 0]})
+        corr_mean = corr_all.mean()
+        results.update({n: corr_mean})
+        print("corr for {} is {}".format(n, corr_mean))
     mmcv.dump(results, file=os.path.join(out_dir, file_name))
     return results
 
 if __name__ == '__main__':
     args = parse_args()
     results = evaluation(args.heatmap_dir, args.out_dir, args.image_path, args.model_path, args.label_path, args.file_name,
-                         covid=args.covid, regression=args.regression)
+                         covid=args.covid, regression=args.regression, blur=args.blur, sigma=args.sigma)

@@ -1,16 +1,21 @@
 import torch
+import torchvision
 import numpy as np
 from evaluation.base import BaseEvaluation
 
 
 class SensitivityN(BaseEvaluation):
 
-    def __init__(self, classifier, img_size, n, num_masks=30):
+    def __init__(self, classifier, img_size, n, num_masks=30, blur=False, sigma=4.):
         self.classifier = classifier
         self.n = n
         self.device = next(self.classifier.parameters()).device
         self.indices, self.masks = self._generate_random_masks(
             num_masks, img_size, device=self.device)
+        self.blur = blur
+        if self.blur:
+            self.gaussian_blur = torchvision.transforms.GaussianBlur(
+                int(2 * sigma - 1), sigma)
 
     def evaluate(   # noqa
             self,
@@ -21,8 +26,15 @@ class SensitivityN(BaseEvaluation):
         pertubated_imgs = []
         sum_attributions = []
         for mask in self.masks:
+
+            # generate baseline image
+            if self.blur:
+                baseline_img = self.gaussian_blur(img)
+            else:
+                baseline_img = torch.zeros_like(img)
+
             # perturb is done by interpolation
-            pertubated_imgs.append(img * (1 - mask))
+            pertubated_imgs.append(img * (1 - mask) + baseline_img * mask)
             sum_attributions.append((heatmap * mask).sum())
         sum_attributions = torch.stack(sum_attributions)
         input_imgs = pertubated_imgs + [img]
@@ -41,6 +53,7 @@ class SensitivityN(BaseEvaluation):
         if calculate_corr:
             corrcoef = np.corrcoef(sum_attributions.flatten(),
                                    score_diffs.flatten())
+            corrcoef = corrcoef[1, 0]
         return {
             "correlation": corrcoef,
             "score_diffs": score_diffs,
