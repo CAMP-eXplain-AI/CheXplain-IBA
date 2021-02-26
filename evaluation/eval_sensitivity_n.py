@@ -127,6 +127,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 else:
                     res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target, calculate_corr=True)
                 corr = res_single['correlation']
+                print(corr)
+                if np.isnan(corr):
+                    corr = 0.
+                print("after: {}".format(corr))
                 # score_diffs = res_single['score_diffs']
                 # sum_attrs = res_single['sum_attributions']
                 # score_diffs_all.append(score_diffs)
