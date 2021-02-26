@@ -17,7 +17,7 @@ class InsertionDeletion(BaseEvaluation):
             int(2 * sigma - 1), sigma)
 
     @torch.no_grad()
-    def evaluate(self, heatmap, img, target):  # noqa
+    def evaluate(self, heatmap, img, target, do_insertion=True, do_deletion=True):  # noqa
         """# TODO to add docs
 
         Args:
@@ -44,29 +44,33 @@ class InsertionDeletion(BaseEvaluation):
         _, indices = torch.topk(heatmap.flatten(), num_pixels)
         indices = np.unravel_index(indices.cpu().numpy(), heatmap.size())
 
+        blurred_img = self.gaussian_blurr(img)
         # apply deletion game
-        deletion_perturber = PixelPerturber(img, torch.zeros_like(img))
-        deletion_scores = self._procedure_perturb(deletion_perturber,
-                                                  num_pixels, indices, target)
+        deletion_scores = None
+        deletion_auc = None
+        if do_deletion:
+            deletion_perturber = PixelPerturber(img, blurred_img)
+            deletion_scores = self._procedure_perturb(deletion_perturber,
+                                                      num_pixels, indices, target)
+
+            # calculate AUC
+            deletion_auc = trapezoid(deletion_scores, dx=1. / len(deletion_scores))
 
         # apply insertion game
-        blurred_img = self.gaussian_blurr(img)
-        insertion_perturber = PixelPerturber(blurred_img, img)
-        insertion_scores = self._procedure_perturb(insertion_perturber,
-                                                   num_pixels, indices, target)
+        insertion_scores = None
+        insertion_auc = None
+        if do_insertion:
+            insertion_perturber = PixelPerturber(blurred_img, img)
+            insertion_scores = self._procedure_perturb(insertion_perturber,
+                                                       num_pixels, indices, target)
 
-        # calculate AUC
-        insertion_auc = trapezoid(insertion_scores,
-                                  dx=1. / len(insertion_scores))
-        deletion_auc = trapezoid(deletion_scores, dx=1. / len(deletion_scores))
+            # calculate AUC
+            insertion_auc = trapezoid(insertion_scores, dx=1. / len(insertion_scores))
 
-        # deletion_img and insertion_img are final results, they are only used for debug purpose
         # TODO check if it is necessary to convert the Tensors to np.ndarray
         return {
             "del_scores": deletion_scores,
             "ins_scores": insertion_scores,
-            "del_img": deletion_perturber.get_current(),
-            "ins_img": insertion_perturber.get_current(),
             "ins_auc": insertion_auc,
             "del_auc": deletion_auc
         }

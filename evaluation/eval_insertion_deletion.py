@@ -65,6 +65,8 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
     deletion_auc = np.array([])
 
     for category in tqdm(category_list, desc="Categories"):
+        insertion_auc_category = np.array([])
+        deletion_auc_category = np.array([])
 
         # get data inside category
         if not covid:
@@ -103,12 +105,12 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
 
         if regression:
             evaluator = InsertionDeletionRegression(model,
-                                          pixel_batch_size=20,
+                                          pixel_batch_size=25,
                                           sigma=4.)
         else:
             target = category_list.index(category)
             evaluator = InsertionDeletion(model,
-                                          pixel_batch_size=20,
+                                          pixel_batch_size=25,
                                           sigma=4.)
 
         for data in tqdm(dataloader, desc="Samples"):
@@ -126,10 +128,12 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 res_single = evaluator.evaluate(heatmap, input.squeeze().to(device), target)
             ins_auc = res_single['ins_auc']
             insertion_auc = np.append(insertion_auc, np.array(ins_auc))
+            insertion_auc_category = np.append(insertion_auc_category, np.array(ins_auc))
             del_auc = res_single['del_auc']
             deletion_auc = np.append(deletion_auc, np.array(del_auc))
-            results.update({"insertion auc_{}".format(category): ins_auc})
-            results.update({"deletion auc_{}".format(category): del_auc})
+            deletion_auc_category = np.append(deletion_auc_category, np.array(del_auc))
+        results.update({"insertion auc_{}".format(category): insertion_auc_category})
+        results.update({"deletion auc_{}".format(category): deletion_auc_category})
     mean_insertion_auc = np.mean(insertion_auc)
     mean_deletion_auc = np.mean(deletion_auc)
     results.update({"insertion auc": mean_insertion_auc})
