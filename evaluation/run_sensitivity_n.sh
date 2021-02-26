@@ -43,13 +43,13 @@ heatmap_dir='/home/ubuntu/results/constant_attribution'
 out_dir='/home/ubuntu'
 file_name='sensitivity_n_constant_blur.json'
 
-python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blurr
+python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/random_attribution'
 out_dir='/home/ubuntu'
 file_name='sensitivity_n_random_blur.json'
 
-python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blurr
+python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/constant_attribution'
 out_dir='/home/ubuntu'
