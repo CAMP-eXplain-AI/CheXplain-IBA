@@ -33,7 +33,7 @@ def parse_args():
                         action="store_true")
     parser.add_argument("--blur", help="use blurred image as baseline",
                         action="store_true")
-    parser.add_argument("sigma", default=4., help="sigma for gaussian blur")
+    parser.add_argument("--sigma", default=4., help="sigma for gaussian blur")
     args = parser.parse_args()
     return args
 
