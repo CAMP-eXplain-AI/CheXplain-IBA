@@ -63,7 +63,9 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
     log_list = np.logspace(0, 4.7, num=50)
     results = {}
 
+    passed_n = 0
     for n in tqdm(log_list):
+        passed_n += 1
         score_diffs_all = []
         sum_attrs_all = []
         corr_all = np.array([])
@@ -131,7 +133,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 # sum_attrs_all.append(sum_attrs)
                 corr_category = np.append(corr_category, np.array([corr]))
                 corr_all = np.append(corr_all, np.array([corr]))
-            results.update({"{}_{}".format(n, category): corr_category})
+            results.update({"{}_{}".format(passed_n, category): corr_category})
         # score_diffs_all = np.concatenate(score_diffs_all, 0)
         # sum_attrs_all = np.concatenate(sum_attrs_all, 0)
         # corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
