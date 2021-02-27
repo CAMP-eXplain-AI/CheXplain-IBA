@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PATH_TO_IMAGES="/home/ubuntu/NIH_small"
-PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best'
+PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best_weighted'
 label_path='/home/ubuntu/informationbottleneck/model/labels'
 heatmap_dir='/home/ubuntu/results/grad_cam'
 out_dir='/home/ubuntu'
