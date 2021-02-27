@@ -21,7 +21,9 @@ from IBA.pytorch import IBA
 
 prak_dir = '/content/drive/MyDrive/Prak_MLMI'
 PATH_TO_IMAGES = "/content/NIH small"
+PATH_TO_COVID_IMAGES = "/content/BrixIAsmall"
 PATH_TO_MODEL = prak_dir + '/model/results/checkpoint_best'
+PATH_TO_COVID_MODEL = prak_dir + '/model/results/classification_checkpoint_best'
 LABEL_PATH = '/content/drive/MyDrive/Prak_MLMI/model/labels'
 
 FINDINGS = [
@@ -39,6 +41,11 @@ FINDINGS = [
     'Fibrosis',
     'Pleural_Thickening',
     'Hernia']
+
+COVID_FINDINGS = [
+    'Detector01',
+    'Detector2',
+    'Detector3']
 
 
 def get_attribution(model, input, target, method, device, saliency_layer='features.norm5', iba_wrapper=None):
@@ -108,7 +115,28 @@ def gen_attribution(dataloader, model, attribution_method, out_dir, device, covi
             for data in tqdm(dataloader, desc="Samples"):
                 input, label, filename, bbox = data
                 category_id = FINDINGS.index(category)
-                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper)
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper)
+                save_attribution_map(mask, out_file=os.path.join(out_dir, attribution_method, category, filename[0]))
+    else:
+        category_list = COVID_FINDINGS
+        for category in tqdm(category_list, desc="Categories"):
+
+            # get data inside category
+            dataloader, model = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+
+            # generate attribution map for each image inside this category
+            for data in tqdm(dataloader, desc="Samples"):
+                input, label, filename = data
+                category_id = COVID_FINDINGS.index(category)
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper)
                 save_attribution_map(mask, out_file=os.path.join(out_dir, attribution_method, category, filename[0]))
 
 
