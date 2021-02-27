@@ -46,7 +46,6 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Infiltration',
             'Mass',
             'Nodule',
-            'Pneumonia',
             'Pneumothorax',
             'Consolidation',
             'Edema',
@@ -120,6 +119,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             else:
                 input, label, filename, bbox = data
                 heatmap = cv2.imread(os.path.join(heatmap_dir, category, filename[0]), cv2.IMREAD_UNCHANGED)
+
+            # skip img if the pred score is too low
+            if torch.nn.functional.sigmoid(model(input.to(device))[0, target]) < 0.6:
+                continue
             heatmap = torch.from_numpy(heatmap).to(device) / 255.0
 
             if regression:

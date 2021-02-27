@@ -17,7 +17,7 @@ class InsertionDeletion(BaseEvaluation):
             int(2 * sigma - 1), sigma)
 
     @torch.no_grad()
-    def evaluate(self, heatmap, img, target, do_insertion=True, do_deletion=True):  # noqa
+    def evaluate(self, heatmap, img, target, do_insertion=True, do_deletion=True, cutoff=0.5):  # noqa
         """# TODO to add docs
 
         Args:
@@ -48,6 +48,7 @@ class InsertionDeletion(BaseEvaluation):
         # apply deletion game
         deletion_scores = None
         deletion_auc = None
+        num_pixels = int(cutoff*num_pixels)
         if do_deletion:
             deletion_perturber = PixelPerturber(img, blurred_img)
             deletion_scores = self._procedure_perturb(deletion_perturber,
