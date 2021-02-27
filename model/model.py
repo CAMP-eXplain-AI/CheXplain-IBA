@@ -123,10 +123,9 @@ def train_model(
             'Hernia']
     else:
         PRED_LABEL = [
-            'NoCovid',
-            'LowCovid',
-            'MildCovid',
-            'SevereCovid']
+            'Detector01',
+            'Detector2',
+            'Detector3']
 
     if not regression:
         tensorboard_writer_auc = {}
@@ -287,7 +286,7 @@ def train_cnn(PATH_TO_IMAGES, LR, WEIGHT_DECAY, fine_tune=False, regression=Fals
     std = [0.229, 0.224, 0.225]
 
     N_LABELS = 14  # we are predicting 14 labels
-    N_COVID_LABELS = 4  # we are predicting 4 COVID labels
+    N_COVID_LABELS = 3  # we are predicting 3 COVID labels
 
     # define torchvision transforms
     data_transforms = {
