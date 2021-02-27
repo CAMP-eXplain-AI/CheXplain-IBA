@@ -46,6 +46,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Infiltration',
             'Mass',
             'Nodule',
+            'Pneumonia',
             'Pneumothorax',
             'Consolidation',
             'Edema',
