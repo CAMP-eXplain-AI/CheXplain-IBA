@@ -106,12 +106,12 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
         if regression:
             evaluator = InsertionDeletionRegression(model,
                                           pixel_batch_size=25,
-                                          sigma=4.)
+                                          sigma=10.)
         else:
             target = category_list.index(category)
             evaluator = InsertionDeletion(model,
                                           pixel_batch_size=25,
-                                          sigma=4.)
+                                          sigma=10.)
 
         for data in tqdm(dataloader, desc="Samples"):
             if covid:
