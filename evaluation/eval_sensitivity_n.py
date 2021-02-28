@@ -129,6 +129,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 corr = res_single['correlation']
 
                 # manually set NaN to zero
+                print(corr)
                 if np.isnan(corr):
                     corr = 0.
                 # score_diffs = res_single['score_diffs']
