@@ -57,7 +57,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Pleural_Thickening',
             'Hernia']
     else:
-        category_list = ["regression"]
+        if regression:
+            category_list = ["regression"]
+        else:
+            category_list = ['Detector01', 'Detector2', 'Detector3']
 
     # generate evaluation
     log_list = np.logspace(0, 4.7, num=50)

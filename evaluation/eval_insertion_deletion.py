@@ -56,7 +56,10 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             'Hernia']
 
     else:
-        category_list = ["regression"]
+        if regression:
+            category_list = ["regression"]
+        else:
+            category_list = ['Detector01', 'Detector2', 'Detector3']
 
     # generate evaluation
     evaluation_metrics = ["insertion", "deletion"]
