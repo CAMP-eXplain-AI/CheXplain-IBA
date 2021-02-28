@@ -40,6 +40,7 @@ class SensitivityN(BaseEvaluation):
         if calculate_corr:
             corrcoef = np.corrcoef(sum_attributions.flatten(),
                                    score_diffs.flatten())
+            corrcoef = corrcoef[1, 0]
         return {
             "correlation": corrcoef,
             "score_diffs": score_diffs,
