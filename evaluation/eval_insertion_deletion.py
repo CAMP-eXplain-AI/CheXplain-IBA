@@ -143,6 +143,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
     results.update({"insertion auc": mean_insertion_auc})
     results.update({"deletion auc": mean_deletion_auc})
     print("insertion auc: {}, deletion auc: {}".format(mean_insertion_auc, mean_deletion_auc))
+    mmcv.mkdir_or_exist(out_dir)
     mmcv.dump(results, file=os.path.join(out_dir, file_name))
     return results
 

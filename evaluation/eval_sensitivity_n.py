@@ -145,6 +145,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
         corr_mean = corr_all.mean()
         results.update({n: corr_mean})
         print("corr for {} is {}".format(n, corr_mean))
+    mmcv.mkdir_or_exist(out_dir)
     mmcv.dump(results, file=os.path.join(out_dir, file_name))
     return results
 
