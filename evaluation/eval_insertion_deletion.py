@@ -100,7 +100,7 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                 category,
                 model_path,
                 'test',
-                POSITIVE_FINDINGS_ONLY=False,
+                POSITIVE_FINDINGS_ONLY=True,
                 covid=True,
                 regression=False,
                 label_path=label_path,
