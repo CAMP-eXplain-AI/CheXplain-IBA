@@ -123,8 +123,8 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
         rand_array = np.random.rand(2000) < 0.3
         for data in tqdm(dataloader, desc="Samples"):
             num_samples += 1
-            if subset and not rand_array[num_samples]:
-                continue
+            # if subset and not rand_array[num_samples]:
+            #     continue
             if covid:
                 if regression:
                     input, label, filename = data
