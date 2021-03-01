@@ -3,7 +3,7 @@
 PATH_TO_IMAGES="/home/ubuntu/NIH_small"
 PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best_weighted'
 label_path='/home/ubuntu/informationbottleneck/model/labels'
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/grad_cam'
+heatmap_dir='/home/ubuntu/results/nih_weighted/grad_cam'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion.json'
 
@@ -16,19 +16,19 @@ python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO
 #python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
 
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/ib'
+heatmap_dir='/home/ubuntu/results/nih_weighted/ib'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_ib.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/reverse_ib'
+heatmap_dir='/home/ubuntu/results/nih_weighted/reverse_ib'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_reverse_ib.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/integrated_gradients'
+heatmap_dir='/home/ubuntu/results/nih_weighted/integrated_gradients'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_integrated_gradients.json'
 
@@ -40,13 +40,13 @@ python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO
 #
 #python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/gradient'
+heatmap_dir='/home/ubuntu/results/nih_weighted/gradient'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_gradient.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/covid_classification_weighted/excitation_backprop'
+heatmap_dir='/home/ubuntu/results/nih_weighted/excitation_backprop'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_excitation_backprop.json'
 
