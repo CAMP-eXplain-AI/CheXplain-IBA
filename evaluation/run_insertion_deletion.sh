@@ -75,26 +75,26 @@ label_path='/home/ubuntu/informationbottleneck/model/labels'
 #python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --covid --regression
 
 ######################################### regression model ###############################################
-heatmap_dir='/home/ubuntu/results/filtered_mask0.0020'
+heatmap_dir='/home/ubuntu/results/filtered_mask_new_weighted_0.0020'
 out_dir='/home/ubuntu'
-file_name='insertion_deletion_filtered_mask02.json'
+file_name='insertion_deletion_filtered_mask02_weighted.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/filtered_mask0.0030'
+heatmap_dir='/home/ubuntu/results/filtered_mask_new_weighted_0.0030'
 out_dir='/home/ubuntu'
-file_name='insertion_deletion_filtered_mask03.json'
+file_name='insertion_deletion_filtered_mask03_weighted.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/filtered_mask0.0040'
+heatmap_dir='/home/ubuntu/results/filtered_mask_new_weighted_0.0040'
 out_dir='/home/ubuntu'
-file_name='insertion_deletion_filtered_mask04.json'
+file_name='insertion_deletion_filtered_mask04_weighted.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
-heatmap_dir='/home/ubuntu/results/filtered_mask0.0050'
+heatmap_dir='/home/ubuntu/results/filtered_mask_new_weighted_0.0060'
 out_dir='/home/ubuntu'
-file_name='insertion_deletion_filtered_mask05.json'
+file_name='insertion_deletion_filtered_mask06_weighted.json'
 
 python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
