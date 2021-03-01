@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PATH_TO_IMAGES="/home/ubuntu/NIH_small"
-PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best_weighted'
+PATH_TO_MODEL='/home/ubuntu/informationbottleneck/model/results/checkpoint_best'
 label_path='/home/ubuntu/informationbottleneck/model/labels'
 #heatmap_dir='/home/ubuntu/results/nih_weighted/grad_cam'
 #out_dir='/home/ubuntu'
@@ -79,28 +79,22 @@ heatmap_dir='/home/ubuntu/results/filtered_mask0.0020'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_filtered_mask02.json'
 
-python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --subset
+python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
 heatmap_dir='/home/ubuntu/results/filtered_mask0.0030'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_filtered_mask03.json'
 
-python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --subset
+python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
 heatmap_dir='/home/ubuntu/results/filtered_mask0.0040'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_filtered_mask04.json'
 
-python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --subset
+python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
 
 heatmap_dir='/home/ubuntu/results/filtered_mask0.0050'
 out_dir='/home/ubuntu'
 file_name='insertion_deletion_filtered_mask05.json'
 
-python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --subset
-
-heatmap_dir='/home/ubuntu/results/norm_concat_heatmaps'
-out_dir='/home/ubuntu'
-file_name='insertion_deletion_norm_concat_heatmaps.json'
-
-python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --subset
+python eval_insertion_deletion.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name
