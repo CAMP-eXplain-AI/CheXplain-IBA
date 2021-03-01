@@ -32,12 +32,14 @@ def parse_args():
                         action="store_true")
     parser.add_argument("--regression", help="regression model",
                         action="store_true")
+    parser.add_argument("--subset", help="evaluate over a subset",
+                        action="store_true")
     args = parser.parse_args()
     return args
 
 
 def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_name="insertion_deletion.json",
-               device='cuda:0', covid=False, regression=False):
+               device='cuda:0', covid=False, regression=False, subset=False):
     if not covid:
         category_list = [
             'Atelectasis',
@@ -116,7 +118,13 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
                                           pixel_batch_size=25,
                                           sigma=10.)
 
+        num_samples = 0
+        np.random.seed(seed=42)
+        rand_array = np.random.rand(2000) < 0.3
         for data in tqdm(dataloader, desc="Samples"):
+            num_samples += 1
+            if subset and not rand_array[num_samples]:
+                continue
             if covid:
                 if regression:
                     input, label, filename = data
@@ -157,4 +165,4 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
 if __name__ == '__main__':
     args = parse_args()
     results = evaluation(args.heatmap_dir, args.out_dir, args.image_path, args.model_path, args.label_path, args.file_name,
-                         covid=args.covid, regression=args.regression)
+                         covid=args.covid, regression=args.regression, subset=args.subset)
