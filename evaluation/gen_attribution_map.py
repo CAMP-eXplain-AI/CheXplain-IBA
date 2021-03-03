@@ -135,7 +135,7 @@ def gen_attribution(dataloader, model, attribution_method, out_dir, device, covi
             # generate attribution map for each image inside this category
             for data in tqdm(dataloader, desc="Samples"):
                 input, label, filename = data
-                category_id = COVID_FINDINGS.index(category)
+                category_id = COVID_FINDINGS.index(category)         
                 mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper)
                 save_attribution_map(mask, out_file=os.path.join(out_dir, attribution_method, category, filename[0]))
 
@@ -298,7 +298,9 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
 
                 input, label, filename = data
                 category_id = COVID_FINDINGS.index(category)
-
+                target = torch.zeros_like(label)
+                target[:, category_id]=1
+                category_id = target
 
                 #  heatmap after block1
                 mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
@@ -481,6 +483,10 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
 
                 input, label, filename = data
                 category_id = COVID_FINDINGS.index(category)
+                target = torch.zeros_like(label)
+                target[:, category_id]=1
+                category_id = target
+            
 
                 #  heatmap after block1
                 mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
