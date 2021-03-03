@@ -139,6 +139,371 @@ def gen_attribution(dataloader, model, attribution_method, out_dir, device, covi
                 mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper)
                 save_attribution_map(mask, out_file=os.path.join(out_dir, attribution_method, category, filename[0]))
 
+def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=False, threshold = [0.006, 0.006]):
+    if not covid:
+        fun_name = sys._getframe().f_code.co_name + '%.4f' % threshold[1]
+        category_list = FINDINGS
+        for category in tqdm(category_list, desc="Categories"):
+
+            # get data inside category
+            dataloader, model = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+
+            # construct information bottleneck
+            print("constructing information bottleneck")
+
+            iba1 = IBA(model.features.denseblock1)
+            iba1.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+
+            iba2 = IBA(model.features.denseblock2)
+            iba2.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+
+            iba3 = IBA(model.features.denseblock3)
+            iba3.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+
+            # generate attribution map for each image inside this category
+            for data in tqdm(dataloader, desc="Samples"):
+                heatmap = []
+
+                input, label, filename, bbox = data
+                category_id = FINDINGS.index(category)
+                target = torch.zeros_like(label)
+                target[:, category_id] = 1
+                category_id = target
+
+                #  heatmap after block1
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
+                heatmap.append(mask)
+
+                #  heatmap after block2
+                hm = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper2)
+                hm = hm / np.linalg.norm(hm)
+                mask = hm.copy()
+                mask[mask < threshold[0]] = 0
+                mask[mask >= threshold[0]] = 1
+                heatmap.append(mask)
+
+                #  heatmap after block3
+                hm = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper3)
+                hm = hm / np.linalg.norm(hm)
+                mask = hm.copy()
+                mask[mask < threshold[1]] = 0
+                mask[mask >= threshold[1]] = 1
+                heatmap.append(mask)
+
+                intersected_heatmap = heatmap[0] * heatmap[1] * heatmap[2]
+
+                save_attribution_map(intersected_heatmap,
+                                     out_file=os.path.join(out_dir, fun_name, category, filename[0]))
+    else:
+        fun_name = sys._getframe().f_code.co_name + '_covid_%.4f' % threshold[1]
+        category_list = COVID_FINDINGS
+        for category in tqdm(category_list, desc="Categories"):
+
+            # get data inside category
+            dataloader, model = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+
+            # construct information bottleneck
+            print("constructing information bottleneck")
+
+            iba1 = IBA(model.features.denseblock1)
+            iba1.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+
+            iba2 = IBA(model.features.denseblock2)
+            iba2.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+
+            iba3 = IBA(model.features.denseblock3)
+            iba3.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+
+            # generate attribution map for each image inside this category
+            for data in tqdm(dataloader, desc="Samples"):
+                heatmap = []
+
+                input, label, filename = data
+                category_id = COVID_FINDINGS.index(category)
+
+
+                #  heatmap after block1
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
+                heatmap.append(mask)
+
+                #  heatmap after block2
+                hm = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper2)
+                hm = hm / np.linalg.norm(hm)
+                mask = hm.copy()
+                mask[mask < threshold[0]] = 0
+                mask[mask >= threshold[0]] = 1
+                heatmap.append(mask)
+
+                #  heatmap after block3
+                hm = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper3)
+                hm = hm / np.linalg.norm(hm)
+                mask = hm.copy()
+                mask[mask < threshold[1]] = 0
+                mask[mask >= threshold[1]] = 1
+                heatmap.append(mask)
+
+                intersected_heatmap = heatmap[0] * heatmap[1] * heatmap[2]
+
+                save_attribution_map(intersected_heatmap,
+                                     out_file=os.path.join(out_dir, fun_name, category, filename[0]))
+
+# sum of normalized mask
+def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device, covid=False, weight = [1, 1, 1]):
+    if not covid:
+        fun_name = sys._getframe().f_code.co_name + '%.4f' % threshold[1]
+        category_list = FINDINGS
+        for category in tqdm(category_list, desc="Categories"):
+
+            # get data inside category
+            dataloader, model = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+
+            # construct information bottleneck
+            print("constructing information bottleneck")
+
+            iba1 = IBA(model.features.denseblock1)
+            iba1.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+
+            iba2 = IBA(model.features.denseblock2)
+            iba2.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+
+            iba3 = IBA(model.features.denseblock3)
+            iba3.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_IMAGES,
+                category,
+                PATH_TO_MODEL,
+                'BBox',
+                POSITIVE_FINDINGS_ONLY=False,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+
+            # generate attribution map for each image inside this category
+            for data in tqdm(dataloader, desc="Samples"):
+                heatmap = []
+
+                input, label, filename, bbox = data
+                category_id = FINDINGS.index(category)
+                target = torch.zeros_like(label)
+                target[:, category_id] = 1
+                category_id = target
+
+                #  heatmap after block1
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                #  heatmap after block2
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper2)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                #  heatmap after block3
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper3)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                heatmap = np.array(heatmap)
+                weighted_heatmap = heatmap[0] * weight[0] + heatmap[1] * weight[1] + heatmap[2] * weight[2]
+
+                save_attribution_map(weighted_heatmap,
+                                     out_file=os.path.join(out_dir, fun_name, category, filename[0]))
+    else:
+        fun_name = sys._getframe().f_code.co_name + '_covid_%.4f' % threshold[1]
+        category_list = COVID_FINDINGS
+        for category in tqdm(category_list, desc="Categories"):
+
+            # get data inside category
+            dataloader, model = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+
+            # construct information bottleneck
+            print("constructing information bottleneck")
+
+            iba1 = IBA(model.features.denseblock1)
+            iba1.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+
+            iba2 = IBA(model.features.denseblock2)
+            iba2.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+
+            iba3 = IBA(model.features.denseblock3)
+            iba3.reset_estimate()
+            dataloader_estimate, _ = V.load_data(
+                PATH_TO_COVID_IMAGES,
+                category,
+                PATH_TO_COVID_MODEL,
+                'test',
+                POSITIVE_FINDINGS_ONLY=True,
+                covid=True,
+                label_path=LABEL_PATH,
+                return_dataloader=True)
+            iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
+            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+
+            # generate attribution map for each image inside this category
+            for data in tqdm(dataloader, desc="Samples"):
+                heatmap = []
+
+                input, label, filename = data
+                category_id = COVID_FINDINGS.index(category)
+
+                #  heatmap after block1
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper1)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                #  heatmap after block2
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper2)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                #  heatmap after block3
+                mask = get_attribution(model, input, category_id, attribution_method, device, iba_wrapper=iba_wrapper3)
+                mask = mask / np.linalg.norm(mask)
+                heatmap.append(mask)
+
+                heatmap = np.array(heatmap)
+                weighted_heatmap = heatmap[0] * weight[0] + heatmap[1] * weight[1] + heatmap[2] * weight[2]
+
+                save_attribution_map(weighted_heatmap,
+                                     out_file=os.path.join(out_dir, fun_name, category, filename[0]))
+
+
 
 class IbaWrapper():
     def __init__(self, informationbottleneck, model_loss_closure_with_target, beta=10, reverse_mask_beta=30):
