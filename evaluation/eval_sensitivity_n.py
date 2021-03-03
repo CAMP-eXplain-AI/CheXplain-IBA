@@ -115,8 +115,13 @@ def evaluation(heatmap_dir, out_dir, image_path, model_path, label_path, file_na
             else:
                 target = category_list.index(category)
                 evaluator = SensitivityN(model, (224, 224), int(n))
-
+            num_samples = 0
+            np.random.seed(seed=42)
+            rand_array = np.random.rand(2000) < 0.4
             for data in dataloader:
+                num_samples += 1
+                if not rand_array[num_samples]:
+                    continue
                 if covid:
                     if regression:
                         input, label, filename = data

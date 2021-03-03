@@ -6,7 +6,7 @@ label_path='/home/ubuntu/informationbottleneck/model/labels'
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/grad_cam'
 out_dir='/home/ubuntu/nih_weighted'
-file_name='sensitivity_n_blur.json'
+file_name='sensitivity_n.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
@@ -17,17 +17,17 @@ python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODE
 #python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/integrated_gradients'
-file_name='sensitivity_n_integrated_gradients_blur.json'
+file_name='sensitivity_n_integrated_gradients.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/ib'
-file_name='sensitivity_n_ib_blur.json'
+file_name='sensitivity_n_ib.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/reverse_ib'
-file_name='sensitivity_n_reverse_ib_blur.json'
+file_name='sensitivity_n_reverse_ib.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
@@ -38,13 +38,13 @@ python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODE
 #python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/gradient'
-file_name='sensitivity_n_gradient_blur.json'
+file_name='sensitivity_n_gradient.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
 heatmap_dir='/home/ubuntu/results/nih_weighted/excitation_backprop'
 out_dir='/home/ubuntu'
-file_name='sensitivity_n_excitation_backprop_blur.json'
+file_name='sensitivity_n_excitation_backprop.json'
 
 python eval_sensitivity_n.py $heatmap_dir $out_dir $PATH_TO_IMAGES $PATH_TO_MODEL $label_path $file_name --blur
 
