@@ -169,7 +169,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+            iba_wrapper1 = IbaWrapper(iba1, binary_crossentropy_loss_with_target)
 
             iba2 = IBA(model.features.denseblock2)
             iba2.reset_estimate()
@@ -182,7 +182,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+            iba_wrapper2 = IbaWrapper(iba2, binary_crossentropy_loss_with_target)
 
             iba3 = IBA(model.features.denseblock3)
             iba3.reset_estimate()
@@ -195,7 +195,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+            iba_wrapper3 = IbaWrapper(iba3, binary_crossentropy_loss_with_target)
 
             # generate attribution map for each image inside this category
             for data in tqdm(dataloader, desc="Samples"):
@@ -262,7 +262,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+            iba_wrapper1 = IbaWrapper(iba1, binary_crossentropy_loss_with_target)
 
             iba2 = IBA(model.features.denseblock2)
             iba2.reset_estimate()
@@ -276,7 +276,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+            iba_wrapper2 = IbaWrapper(iba2, binary_crossentropy_loss_with_target)
 
             iba3 = IBA(model.features.denseblock3)
             iba3.reset_estimate()
@@ -290,7 +290,7 @@ def filtered_mask(dataloader, model, attribution_method, out_dir, device, covid=
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+            iba_wrapper3 = IbaWrapper(iba3, binary_crossentropy_loss_with_target)
 
             # generate attribution map for each image inside this category
             for data in tqdm(dataloader, desc="Samples"):
@@ -356,7 +356,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+            iba_wrapper1 = IbaWrapper(iba1, binary_crossentropy_loss_with_target)
 
             iba2 = IBA(model.features.denseblock2)
             iba2.reset_estimate()
@@ -369,7 +369,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+            iba_wrapper2 = IbaWrapper(iba2, binary_crossentropy_loss_with_target)
 
             iba3 = IBA(model.features.denseblock3)
             iba3.reset_estimate()
@@ -382,7 +382,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+            iba_wrapper3 = IbaWrapper(iba3, binary_crossentropy_loss_with_target)
 
             # generate attribution map for each image inside this category
             for data in tqdm(dataloader, desc="Samples"):
@@ -445,7 +445,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba1.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper1 = IbaWrapper(iba1, softmax_crossentropy_loss_with_target)
+            iba_wrapper1 = IbaWrapper(iba1, binary_crossentropy_loss_with_target)
 
             iba2 = IBA(model.features.denseblock2)
             iba2.reset_estimate()
@@ -459,7 +459,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba2.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper2 = IbaWrapper(iba2, softmax_crossentropy_loss_with_target)
+            iba_wrapper2 = IbaWrapper(iba2, binary_crossentropy_loss_with_target)
 
             iba3 = IBA(model.features.denseblock3)
             iba3.reset_estimate()
@@ -473,7 +473,7 @@ def norm_concat_heatmaps(dataloader, model, attribution_method, out_dir, device,
                 label_path=LABEL_PATH,
                 return_dataloader=True)
             iba3.estimate(model, dataloader_estimate, device=dev, n_samples=800, progbar=True)
-            iba_wrapper3 = IbaWrapper(iba3, softmax_crossentropy_loss_with_target)
+            iba_wrapper3 = IbaWrapper(iba3, binary_crossentropy_loss_with_target)
 
             # generate attribution map for each image inside this category
             for data in tqdm(dataloader, desc="Samples"):
