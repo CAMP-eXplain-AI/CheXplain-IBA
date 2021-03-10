@@ -1,3 +1,6 @@
+# Note: 
+This folder is taken and modified from the [Informational Bottlenecks for Attribution](https://github.com/BioroboticsLab/IBA). Below is the readme from the original repository.
+
 # IBA: Informational Bottlenecks for Attribution
 
 
