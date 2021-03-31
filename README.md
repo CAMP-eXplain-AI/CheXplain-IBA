@@ -8,7 +8,7 @@ This is the source code for our [paper](). The repository is divided into 3 part
 3. Download BrixIA and NIH ChestXray images, the labels is included in this repository in _model/labels_
 
 # Usage
-We provide several Jupyter notebooks in each sub-folder
+We provide several Jupyter notebooks in each sub-folder (IBA/notebooks, model/notebooks)
 ## Model Training
 In  _model/results_ we provide trained model for NIH ChestXray, BrixIA regression, and BrixIA classification scheme
 In _model/notebooks_ their are notebooks to train, fine tune, and evaluate models
