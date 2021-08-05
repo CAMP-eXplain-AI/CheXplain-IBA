@@ -1,3 +1,11 @@
+#### In a nutshell
+We propose several explanation methodologies building on Information Bottleneck Attribution (IBA):
+
+* Our main contribution is the Inverse IBA saliency (attribution) method which identifies *any* region that has predictive information for the model.
+* We also propose Regression IBA for explaining regression models. Using Regression IBA we observe that a model trained on cumulative COVID-19 severity score labels implicitly learns the severity of different X-ray regions.
+* Finally, we propose Multi-layer IBA to generate higher resolution and detailed attribution/saliency maps.
+
+
 ## Welcome to GitHub Pages
 
 You can use the [editor on GitHub](https://github.com/CAMP-eXplain-AI/CheXplain-IBA/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
